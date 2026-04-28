@@ -1,3 +1,7 @@
+# Generated data files
+coin_universe.json
+*.json
+
 perpscope/
 data/
 __pycache__/
