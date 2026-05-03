@@ -5,7 +5,7 @@ import os
 # File Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
-UNIVERSE_FILE = os.path.join(DATA_DIR, 'coin_universe.json')
+UNIVERSE_FILE = os.path.join(BASE_DIR, 'coin_universe.json')
 
 
 def load_universe():
@@ -41,16 +41,6 @@ KLINE_INTERVAL = 60
 HISTORY_START_YEAR = 2022
 HISTORY_START_MONTH = 1
 HISTORY_START_DAY = 1
-
-
-# ---------------Market Cap Classification---------------------------
-# NB: There would be a script in the future that'd handle marrket cap
-#     classification using CoinGecko's API. But for now, lets hard code
-#     the current top 10 i.e the large-cap coins.
-LARGE_CAP_COINS = [
-    'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
-    'ADAUSDT', 'AVAXUSDT', 'DOGEUSDT', 'TRXUSDT', 'LINKUSDT'
-]
 
 
 def create_data_dir(symbol):
