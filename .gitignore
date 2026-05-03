@@ -1,11 +1,19 @@
 # Generated data files
 coin_universe.json
 *.json
-
-perpscope/
 data/
+*.csv
+*.db
+
+# Log Files
+*.txt
+collection_log.txt
+*.log
+
+# Virtual Environment
+perpscope/
+
+# Python cache
 __pycache__/
 *.pyc
 .env
-*.csv
-*.db

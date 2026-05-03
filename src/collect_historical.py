@@ -1,8 +1,11 @@
-import requests
-import pandas as pd
-import os
-import time
 import json
+import os
+import pandas as pd
+import random
+import requests
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 import sys
@@ -223,3 +226,117 @@ def collect_klines(symbol, category, start_ms=None):
     
     return len(df)
 
+
+# -----------------------------------TRACKING PROGRESS--------------------------------
+def load_progress():
+    """
+    This function loads the progress file that tracks which coins are done.
+    Therefore, if for some reason, the script crashes, you can resume from where
+    you stopped without recollecting coins that have already been collected.
+    """
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    progress_file = os.path.join(base_dir, 'collection_progress.json')
+
+    if os.path.exists(progress_file):
+        with open(progress_file, 'r') as f:
+            return json.load(f)
+        
+    return {'completed': [], 'failed': []}
+
+
+def save_progress(progress):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    progress_file = os.path.join(base_dir, 'collection_progress.json')
+
+    with open(progress_file, 'w') as f:
+        json.dump(progress, f, indent=2)
+
+
+# ------------------------THE MAIN COLLECTION FUNCTION-------------------------------
+progress_lock = threading.Lock()
+
+def collect_single_coin(symbol):
+    """
+    This function collects all three data types for one coin.
+    """
+    try:
+        time.sleep(random.uniform(0.1, 0.5))
+        n_f = collect_funding_rates(symbol)
+        n_p = collect_klines(symbol, 'linear')
+        n_s = collect_klines(symbol, 'spot')
+        total = n_f + n_p + n_s
+
+        if total == 0:
+            log(f"WARNING: No data collected for [{symbol}]")
+            return(symbol, False, 0) 
+        
+        log(f"Successfully collected data for [{symbol}]")
+        return (symbol, True, total)
+    
+    except Exception as e:
+        log(f"Failure to collect data for [{symbol}]: {e}")
+        return(symbol, False, 0) 
+
+
+
+def collect_all_historical_data(max_workers=10):
+    """
+    This is the main function that calls on all the other functions above to
+    collect funding rates, perpetual klines, and spot klines for every coin in
+    parallel.
+    "max_workers" controls simultaneous downloads.
+    """
+    progress = load_progress()
+    completed = set(progress['completed'])
+    failed = progress['failed']
+
+    # skip already downloaded coins
+    remaining = [c for c in PRODUCT_UNIVERSE if c not in completed]
+
+    log(f"Starting Historical collection...")
+    log(f"Total coins: {len(PRODUCT_UNIVERSE)}")
+    log(f"Already done: {len(completed)}")
+    log(f"Remaining: {len(remaining)}")
+    log("=" * 60)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_symbol = {
+            executor.submit(collect_single_coin, symbol): symbol
+            for symbol in remaining
+        }
+
+        for future in as_completed(future_to_symbol):
+            symbol = future_to_symbol[future]
+
+            try:
+                symbol, success, records = future.result()
+
+                with progress_lock:
+                    if success:
+                        completed.add(symbol)
+                        progress['completed'] = list(completed)
+                        done_count = len(completed)
+                        total_count = len(PRODUCT_UNIVERSE)
+                        pct = (done_count / total_count) * 100
+                        log(f"✅ {symbol} | {records:,} records | "
+                            f"{done_count}/{total_count} ({pct:.1f}%)")
+                    else:
+                        failed.add(symbol)
+                        progress['failed'] = list(failed)
+                        log(f"❌ {symbol} | FAILED")
+
+                    save_progress(progress)
+
+            except Exception as e:
+                log(f"❌ {symbol} | Exception: {e}")
+
+    log("\n" + "=" * 60)
+    log(f"Collection complete!")
+    log(f"Successful: {len(completed)}")
+    log(f"Failed: {len(failed)}")
+    if failed:
+        log(f"Failed coins: {failed}")
+
+
+if __name__ == "__main__":
+    collect_all_historical_data()
