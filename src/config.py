@@ -35,6 +35,9 @@ SLEEP_BETWEEN_CALLS = 2.0
 SLEEP_BETWEEN_COINS = 1.0
 SLEEP_ON_ERROR = 10.0
 
+# CoinGecko API
+COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3/coins"
+
 
 # Data Settings
 KLINE_INTERVAL = 60

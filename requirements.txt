@@ -202,6 +202,7 @@ python-apt==2.4.0+ubuntu4
 python-dateutil==2.9.0.post0
 python-debian==0.1.43+ubuntu1.1
 python-discovery==1.2.1
+python-dotenv==1.2.2
 python-json-logger==4.0.0
 python-keystoneclient==5.7.0
 python-subunit==1.4.0

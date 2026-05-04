@@ -5,7 +5,7 @@ import time
 
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import REQUEST_TIMEOUT
+from config import REQUEST_TIMEOUT, COINGECKO_BASE_URL
 from utils import log
 
 
@@ -14,7 +14,7 @@ def fetch_coingecko_page(page, per_page=250):
     This function fetches one page of market ranking from CoinGecko
     and returns a dictionary of coins or an empty list if request is failed.
     """
-    url = "https://api.coingecko.com/api/v3/coins/markets"
+    url = f"{COINGECKO_BASE_URL}/markets"
     params = {
         "vs_currency": "usd",
         "order": "market_cap_desc",
@@ -40,9 +40,9 @@ def fetch_coingecko_page(page, per_page=250):
     except Exception as e:
         log(f"Request failed on page {page}: {e}")
         return []
-    
 
-def fetch_all_rankings(max_coins=1000):
+
+def fetch_all_rankings(max_coins=5000):
     """
     This function fetches market cap rankings for the top 1000 coins.
     """
@@ -64,6 +64,44 @@ def fetch_all_rankings(max_coins=1000):
 
     log(f"Fetched {len(all_coins)} coins from CoinGecko")
     return all_coins
+
+
+# def fetch_launch_time_ms(coingecko_id):
+#     """
+#     This function fetches the genesis/launch date for a particular coin
+#     and returns it as a date string or string 0 if unavailable
+#     """
+#     url = f"{COINGECKO_BASE_URL}/{coingecko_id}"
+#     params = {
+#         "localization": False,
+#         "tickers": False,
+#         "market_data": False,
+#         "community_data": False,
+#         "developer_data": False,
+#     }
+    
+#     try:
+#         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+
+#         if response.status_code == 429:
+#             log(f"Rate limitied fetching {coingecko_id}. Waiting 60s...")
+#             time.sleep(60)
+#             return fetch_launch_time_ms(coingecko_id)
+        
+#         if response.status_code != 200:
+#             return None
+        
+#         data = response.json()
+#         genesis_date = data.get("genesis_date")
+
+#         if not genesis_date:
+#             return None
+        
+#         return genesis_date
+    
+#     except Exception as e:
+#         log(f"Failed to fetch launch time for {coingecko_id}: {e}")
+#         return None
 
 
 def build_ranking_lookup(coingecko_coins):
@@ -92,8 +130,10 @@ def build_ranking_lookup(coingecko_coins):
             'market_cap': coin['market_cap'] or 0,
             'name': coin['name'],
             'coingecko_id': cg_id,
-            'symbol': cg_symbol
+            'symbol': cg_symbol,
+            # 'launch_time_ms': None
         }
+    print(json.dumps(coingecko_coins[0], indent=2))
 
     return lookup
 
@@ -145,7 +185,8 @@ def save_market_cap_classification(lookup, large, mid, small, unmatched):
                 'name': lookup.get(s, {}).get('name', 'Unknown'),
                 'rank': lookup.get(s, {}).get('rank', 9999),
                 'market_cap': lookup.get(s, {}).get('market_cap', 0),
-                'coingecko_id': lookup.get(s, {}).get('coingecko_id', None)
+                'coingecko_id': lookup.get(s, {}).get('coingecko_id', None),
+                # 'launch_time_ms': lookup.get(s, {}).get('launch_time_ms', None)
             }
             for s in sorted(symbols, key=lambda x: lookup.get(x, {}).get('rank', 9999))
         ]
@@ -184,7 +225,7 @@ def run_classification():
 
     # Fetching market cap rankings from CoinGecko
     log(f"Fetching market cap rankings from CoinGecko...")
-    coingecko_coins = fetch_all_rankings(max_coins=1000)
+    coingecko_coins = fetch_all_rankings(max_coins=5000)
 
     # Building the symbol matching lookup
     log(f"\nBuilding symbol matching lookup...")
@@ -196,6 +237,16 @@ def run_classification():
     large, mid, small, unmatched = classify_by_market_cap(
         lookup, product_universe
     )
+
+    # matched_symbols = [s for s in product_universe if s in lookup]
+    # log(f"Fetching launch times for {len(matched_symbols)} matched coins...")
+
+    # for i, symbol in enumerate(matched_symbols):
+    #     cg_id = lookup[symbol]['coingecko_id']
+    #     launch_ms = fetch_launch_time_ms(cg_id)
+    #     lookup[symbol]['launch_time_ms'] = launch_ms
+    #     log(f"[{i+1}/{len(matched_symbols)}] {symbol}: {launch_ms}")
+    #     time.sleep(2)
     
     # Save results
     save_market_cap_classification(lookup, large, mid, small, unmatched)
