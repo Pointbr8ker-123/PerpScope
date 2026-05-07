@@ -7,7 +7,7 @@ from io import StringIO
 from psycopg2.extras import execute_values
 from utils import log
 
-from config import BASE_DIR, DATA_DIR, PRODUCT_UNIVERSE
+from config import BASE_DIR, DATA_DIR, COIN_LIST
 
 load_dotenv()
 
@@ -358,16 +358,7 @@ def insert_funding_rates():
     This function inserts the funding_rates cvs files into the funding_rates 
     table in the database.
     """
-    json_path = os.path.join(BASE_DIR, 'market_cap_classification.json')
-
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-
-    coins = []
-    for tier in ('large_cap', 'mid_cap'):
-        for coin in data[tier]:
-            coins.append(coin['symbol'])
-    
+    coins = COIN_LIST
     log(f"Loading historical funding rates for {len(coins)} coins...")
 
     total_inserted = 0
@@ -419,16 +410,7 @@ def insert_prices(price_type, database_table, csv_name):
     This function inserts the spot/perp prices to their respective tables
     in the database.
     """
-    json_path = os.path.join(BASE_DIR, 'market_cap_classification.json')
-
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-
-    coins = []
-    for tier in ('large_cap', 'mid_cap'):
-        for coin in data[tier]:
-            coins.append(coin['symbol'])
-
+    coins = COIN_LIST
     log(f"Loading historical {price_type} prices for {len(coins)} coins...")
 
     already_loaded = get_already_loaded_symbols(database_table)

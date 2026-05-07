@@ -6,6 +6,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 UNIVERSE_FILE = os.path.join(BASE_DIR, 'coin_universe.json')
+MARKET_CAP_CLASSIFICATION =  os.path.join(BASE_DIR, 'market_cap_classification.json')
 
 
 def load_universe():
@@ -62,3 +63,39 @@ def get_perp_path(symbol):
 
 def get_spot_path(symbol):
     return os.path.join(DATA_DIR, symbol, f'{symbol}_spot_hourly.csv')
+
+def get_coin_list():
+    """This function would focus on returning a list consisting of large_cap
+    and mid_cap coins for now at this MVP level due to database restrictions"""
+    with open(MARKET_CAP_CLASSIFICATION, 'r') as f:
+        data = json.load(f)
+
+    coin_list = []
+    for tier in ('large_cap', 'mid_cap'):
+        for coin in data[tier]:
+            coin_list.append(coin['symbol'])
+
+    return coin_list
+
+def get_coin_metadata():
+    """This function would focus on returning a dict consisting of metadata of 
+    large_cap and mid_cap coins for now at this MVP level due to database 
+    restrictions"""
+    with open(MARKET_CAP_CLASSIFICATION, 'r') as f:
+        data = json.load(f)
+
+    coin_metadata = {}
+    for tier in ('large_cap', 'mid_cap'):
+        for coin in data[tier]:
+            coin_metadata[coin['symbol']] = {
+                'name': coin['name'],
+                'tier': tier,
+                'rank': coin['rank'],
+                'market_cap': coin['market_cap'],
+                'coingecko_id': coin['coingecko_id'],
+            }
+    return coin_metadata
+
+
+COIN_LIST = get_coin_list()
+MARKET_CAP_LOOKUP = get_coin_metadata()
