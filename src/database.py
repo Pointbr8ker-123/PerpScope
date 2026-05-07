@@ -1,11 +1,13 @@
 import json
+import pandas as pd
 import psycopg2
-import psycopg2.extras
 import os
 from dotenv import load_dotenv
+from io import StringIO
+from psycopg2.extras import execute_values
 from utils import log
 
-from config import BASE_DIR
+from config import BASE_DIR, DATA_DIR, PRODUCT_UNIVERSE
 
 load_dotenv()
 
@@ -61,7 +63,7 @@ def create_tables():
                 id              BIGSERIAL           PRIMARY KEY,
                 symbol          VARCHAR(20)         NOT NULL,
                 timestamp_ms    BIGINT              NOT NULL,
-                timstamp        TIMESTAMPTZ         NOT NULL,
+                timestamp        TIMESTAMPTZ        NOT NULL,
                 funding_rate    DOUBLE PRECISION    NOT NULL,
                 UNIQUE (symbol, timestamp_ms)
             );
@@ -83,7 +85,7 @@ def create_tables():
                 id              BIGSERIAL           PRIMARY KEY,
                 symbol          VARCHAR(20)         NOT NULL,
                 timestamp_ms    BIGINT              NOT NULL,
-                timstamp        TIMESTAMPTZ         NOT NULL,
+                timestamp       TIMESTAMPTZ         NOT NULL,
                 open            DOUBLE PRECISION,
                 high            DOUBLE PRECISION,
                 low             DOUBLE PRECISION,
@@ -109,7 +111,7 @@ def create_tables():
                 id              BIGSERIAL           PRIMARY KEY,
                 symbol          VARCHAR(20)         NOT NULL,
                 timestamp_ms    BIGINT              NOT NULL,
-                timstamp        TIMESTAMPTZ         NOT NULL,
+                timestamp       TIMESTAMPTZ         NOT NULL,
                 open            DOUBLE PRECISION,
                 high            DOUBLE PRECISION,
                 low             DOUBLE PRECISION,
@@ -313,7 +315,7 @@ def seed_coin_universe_table_from_json(json_path=None):
         data = json.load(f)
 
     coins = []
-    for tier in ('large_cap', 'mid_cap', 'small_cap'):
+    for tier in ('large_cap', 'mid_cap'):
         for coin in data[tier]:
             coins.append({
                 'symbol': coin['symbol'],
@@ -330,9 +332,194 @@ def seed_coin_universe_table_from_json(json_path=None):
     return inserted
 
 
+def is_already_loaded(symbol, table):
+    sql = f"""SELECT 1 FROM {table} WHERE symbol = %s LIMIT 1"""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (symbol,))
+            return cur.fetchone() is not None
+
+
+def get_already_loaded_symbols(table):
+    """
+    This function returns a set of symbols that already have data in the given table.
+    """
+    sql = f"SELECT DISTINCT symbol FROM {table}"
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+            rows = cur.fetchall()
+
+    return {row['symbol'] for row in rows}
+
+
+def insert_funding_rates():
+    """
+    This function inserts the funding_rates cvs files into the funding_rates 
+    table in the database.
+    """
+    json_path = os.path.join(BASE_DIR, 'market_cap_classification.json')
+
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+
+    coins = []
+    for tier in ('large_cap', 'mid_cap'):
+        for coin in data[tier]:
+            coins.append(coin['symbol'])
+    
+    log(f"Loading historical funding rates for {len(coins)} coins...")
+
+    total_inserted = 0
+    missing = []
+
+    for symbol in coins:
+        if is_already_loaded(symbol, table='funding_rates'):
+            log(f"{symbol}: already loaded, skipping...")
+            continue
+
+        csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_funding_rates.csv")
+
+        if not os.path.exists(csv_path):
+            log(f"WARNING: No funding rates CSV found for {symbol}, skipping...")
+            missing.append(symbol)
+            continue
+
+        try:
+            with get_connection() as conn:
+                with conn.cursor() as cur:
+                    with open(csv_path, 'r') as f:
+                        next(f)
+                        cur.copy_expert("""
+                            COPY funding_rates
+                                (timestamp, timestamp_ms, symbol, funding_rate)
+                            FROM STDIN WITH CSV
+                        """, f)
+                        rows_inserted = cur.rowcount
+                conn.commit()
+
+            total_inserted += rows_inserted
+            log(f"{symbol}: inserted {rows_inserted} rows")
+
+        except Exception as e:
+            log(f"ERROR on {symbol}: {e}")
+            missing.append(symbol)
+            continue
+
+    log(f"\nDone. Total rows inserted: {total_inserted}")
+
+    if missing:
+        log(f"Missing or failed CSVs for {len(missing)} coins: {missing}")
+
+    return total_inserted
+
+
+def insert_prices(price_type, database_table, csv_name):
+    """
+    This function inserts the spot/perp prices to their respective tables
+    in the database.
+    """
+    json_path = os.path.join(BASE_DIR, 'market_cap_classification.json')
+
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+
+    coins = []
+    for tier in ('large_cap', 'mid_cap'):
+        for coin in data[tier]:
+            coins.append(coin['symbol'])
+
+    log(f"Loading historical {price_type} prices for {len(coins)} coins...")
+
+    already_loaded = get_already_loaded_symbols(database_table)
+    log(f"{len(already_loaded)} coins already loaded, skipping those...")
+
+    total_inserted = 0
+    missing = []
+
+    for symbol in coins:
+        # if is_already_loaded(symbol, table=database_table):
+        #     log(f"{symbol}: already loaded, skipping...")
+        #     continue
+        
+        if symbol in already_loaded:
+            continue
+
+        csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_{csv_name}.csv")
+
+        if not os.path.exists(csv_path):
+            log(f"WARNING: No {price_type} prices CSV found for {symbol}, skipping...")
+            missing.append(symbol)
+            continue
+
+        try:
+            with open(csv_path, 'r', newline='') as csv_file:
+                next(csv_file)
+                buffer = StringIO(''.join(f"{symbol},{line}" for line in csv_file))
+
+            with get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.copy_expert(f"""
+                        COPY {database_table}
+                            (symbol, timestamp, timestamp_ms, open, high, low, close, volume)
+                        FROM STDIN WITH CSV
+                    """, buffer)
+                    rows_inserted = cur.rowcount
+                conn.commit()
+
+            total_inserted += rows_inserted
+            log(f"{symbol}: inserted {rows_inserted} rows")
+
+        except Exception as e:
+            log(f"ERROR on {symbol}: {e}")
+            missing.append(symbol)
+            continue
+
+    log(f"\nDone. Total rows inserted: {total_inserted}")
+
+    if missing:
+        log(f"Missing or failed CSVs for {len(missing)} coins: {missing}")
+
+    return total_inserted
+
+
+def get_coin_universe_from_database():
+    """
+    This function returns coin info from the database.
+    This would work with the FastAPI backend to retrieve coin data for
+    display on the frontend.
+    """
+    sql = """
+        SELECT
+            symbol, name, coingecko_id,
+            market_cap, market_cap_rank,
+            market_cap_tier, has_spot_market,
+            is_active
+        FROM coin_universe
+        WHERE is_active = true
+        ORDER BY market_cap_rank ASC NULLS LAST
+    """
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+            rows = cur.fetchall()
+
+    return [dict(row) for row in rows]
+    
+
 if __name__ == "__main__":
-    # log(f"Setting up Supabase database...")
-    # create_tables()
+    log(f"Setting up Supabase database...")
+    create_tables()
 
     log(f"Inserting coin info into the coin_universe database table...")
     seed_coin_universe_table_from_json()
+
+    log(f"\nLoading historical funding rates...")
+    insert_funding_rates()
+
+    log(f"\nLoading historical perp prices...")
+    insert_prices('perp', 'perp_prices', 'perp_hourly')
+
+    log(f"\nLoading historical spot prices...")
+    insert_prices('spot', 'spot_prices', 'spot_hourly')

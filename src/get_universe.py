@@ -2,8 +2,8 @@ import requests
 import json
 import os
 from datetime import datetime, timezone
+from config import BASE_URL
 
-BASE_URL = "https://api.bytick.com"
 
 def get_all_linear_perpetuals():
     """

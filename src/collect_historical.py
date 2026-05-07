@@ -135,8 +135,8 @@ def fetch_klines_page(symbol, category, start_ms, end_ms, interval=60, limit=200
         "category": category,
         "symbol": symbol,
         "interval": interval,
-        "start_ms": start_ms,
-        "end_ms": end_ms,
+        "start": start_ms,
+        "end": end_ms,
         "limit": limit
     }
 
@@ -261,10 +261,10 @@ def collect_single_coin(symbol):
     """
     try:
         time.sleep(random.uniform(0.1, 0.5))
-        n_f = collect_funding_rates(symbol)
+        # n_f = collect_funding_rates(symbol)
         n_p = collect_klines(symbol, 'linear')
         n_s = collect_klines(symbol, 'spot')
-        total = n_f + n_p + n_s
+        total = n_s + n_p
 
         if total == 0:
             log(f"WARNING: No data collected for [{symbol}]")
@@ -278,8 +278,7 @@ def collect_single_coin(symbol):
         return(symbol, False, 0) 
 
 
-
-def collect_all_historical_data(max_workers=10):
+def collect_all_historical_data(max_workers=1):
     """
     This is the main function that calls on all the other functions above to
     collect funding rates, perpetual klines, and spot klines for every coin in
