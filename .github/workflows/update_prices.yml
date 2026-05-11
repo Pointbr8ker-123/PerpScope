@@ -1,47 +1,35 @@
-name: Debug Bybit Domains
+name: Update Prices (Hourly)
 
 on:
+  schedule:
+    - cron: '5 * * * *'
+
   workflow_dispatch:
 
 jobs:
-  debug-domains:
+  update-prices:
     runs-on: ubuntu-latest
-    
+
+    timeout-minutes: 30
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
-      - name: Install requests
-        run: pip install requests
-      
-      - name: Test Bybit domains
+
+      - name: Install dependencies
         run: |
-          import requests
-          
-          domains = [
-              'https://api.bybit.com',
-              'https://api.bytick.com',
-          ]
-          
-          headers = {'User-Agent': 'Mozilla/5.0 (compatible; DriftexBot/1.0)'}
-          
-          print('Testing Bybit domains from GitHub Actions...\n')
-          
-          for domain in domains:
-              url = f'{domain}/v5/market/tickers?category=linear&symbol=BTCUSDT'
-              try:
-                  resp = requests.get(url, headers=headers, timeout=10)
-                  print(f'✅ {domain}: SUCCESS (status {resp.status_code})')
-                  if resp.status_code == 200:
-                      data = resp.json()
-                      if data.get('retCode') == 0:
-                          price = data['result']['list'][0]['lastPrice']
-                          print(f'   BTC price via {domain}: ${price}')
-              except Exception as e:
-                  print(f'❌ {domain}: FAILED — {e}')
-        shell: python
+          pip install requests psycopg2 python-dotenv pandas
+
+      - name: Run hourly price update
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BYBIT_API_KEY: ${{ secrets.BYBIT_API_KEY }}
+          BYBIT_SECRET_KEY: ${{ secrets.BYBIT_SECRET_KEY}}
+        run: |
+          cd src 
+          python update_data.py prices
