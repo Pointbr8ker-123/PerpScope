@@ -1,0 +1,35 @@
+name: Update Prices (Hourly)
+
+on:
+  schedule:
+    - cron: '5 * * * *'
+
+  workflow_dispatch:
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests psycopg2 python-dotenv pandas
+
+      - name: Run hourly price update
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BYBIT_API_KEY: ${{ secrets.BYBIT_API_KEY }}
+          BYBIT_SECRET_KEY: ${{ secrets.BYBIT_SECRET_KEY}}
+        run: |
+          cd src 
+          python update_data.py prices
