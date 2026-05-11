@@ -29,3 +29,5 @@ def log(message, log_file='collection_log.txt'):
     print(full_message)
     with open(os.path.join(base_dir, log_file), 'a') as f:
         f.write(full_message + '\n\n')
+
+

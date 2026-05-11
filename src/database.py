@@ -2,12 +2,13 @@ import json
 import pandas as pd
 import psycopg2
 import os
+import time
 from dotenv import load_dotenv
 from io import StringIO
 from psycopg2.extras import execute_values
-from utils import log
+from utils import log, now_ms
 
-from config import BASE_DIR, DATA_DIR, COIN_LIST
+from config import BASE_DIR, DATA_DIR, ALL_COINS
 
 load_dotenv()
 
@@ -315,7 +316,7 @@ def seed_coin_universe_table_from_json(json_path=None):
         data = json.load(f)
 
     coins = []
-    for tier in ('large_cap', 'mid_cap'):
+    for tier in ('large_cap', 'mid_cap', 'small_cap'):
         for coin in data[tier]:
             coins.append({
                 'symbol': coin['symbol'],
@@ -353,22 +354,22 @@ def get_already_loaded_symbols(table):
     return {row['symbol'] for row in rows}
 
 
-def insert_funding_rates():
+def insert_funding_rates(days=90):
     """
-    This function inserts the funding_rates cvs files into the funding_rates 
-    table in the database.
+    This function migrates only the last N days from the funding_rates CSV 
+    files into the funding_rates table in the database.
     """
-    coins = COIN_LIST
-    log(f"Loading historical funding rates for {len(coins)} coins...")
+    cutoff_ms = now_ms() - (days * 24 * 60 * 60 * 1000)
+
+    already_loaded = get_already_loaded_symbols('funding_rates')
+    remaining = [s for s in ALL_COINS if s not in already_loaded]
+
+    log(f"Loading last {days} days of historical funding rates for {len(remaining)} coins...")
 
     total_inserted = 0
     missing = []
 
-    for symbol in coins:
-        if is_already_loaded(symbol, table='funding_rates'):
-            log(f"{symbol}: already loaded, skipping...")
-            continue
-
+    for symbol in remaining:
         csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_funding_rates.csv")
 
         if not os.path.exists(csv_path):
@@ -377,25 +378,43 @@ def insert_funding_rates():
             continue
 
         try:
+            df = pd.read_csv(csv_path)
+
+            df = df[df['timestamp_ms'] >= cutoff_ms]
+
+            if df.empty:
+                log(f"{symbol}: no data in last {days} days, skipping...")
+                continue
+
+            rows = [
+                (
+                    str(row['symbol']) if 'symbol' in df.columns else symbol,
+                    int(row['timestamp_ms']),
+                    str(row['timestamp']),
+                    float(row['funding_rate'])
+                )
+                for _, row in df.iterrows()
+            ]
+
+            sql = """
+                INSERT INTO funding_rates
+                    (symbol, timestamp_ms, timestamp, funding_rate)
+                VALUES
+                    (%s, %s, %s, %s)
+                ON CONFLICT (symbol, timestamp_ms) DO NOTHING
+            """
+
             with get_connection() as conn:
                 with conn.cursor() as cur:
-                    with open(csv_path, 'r') as f:
-                        next(f)
-                        cur.copy_expert("""
-                            COPY funding_rates
-                                (timestamp, timestamp_ms, symbol, funding_rate)
-                            FROM STDIN WITH CSV
-                        """, f)
-                        rows_inserted = cur.rowcount
+                    cur.executemany(sql, rows)
                 conn.commit()
 
-            total_inserted += rows_inserted
-            log(f"{symbol}: inserted {rows_inserted} rows")
+            total_inserted += len(rows)
+            log(f"{symbol}: inserted {len(rows)} rows")
 
         except Exception as e:
             log(f"ERROR on {symbol}: {e}")
             missing.append(symbol)
-            continue
 
     log(f"\nDone. Total rows inserted: {total_inserted}")
 
@@ -405,62 +424,81 @@ def insert_funding_rates():
     return total_inserted
 
 
-def insert_prices(price_type, database_table, csv_name):
+def insert_prices(price_type, database_table, csv_suffix, days=90):
     """
-    This function inserts the spot/perp prices to their respective tables
-    in the database.
+    This function migrates only the last N days from the perp_prices
+    and spot_prices CSV files into their respective tables in the database.
     """
-    coins = COIN_LIST
-    log(f"Loading historical {price_type} prices for {len(coins)} coins...")
-
+    cutoff_ms = now_ms() - (days * 24 * 60 * 60 * 1000)
     already_loaded = get_already_loaded_symbols(database_table)
-    log(f"{len(already_loaded)} coins already loaded, skipping those...")
+    remaining = [s for s in ALL_COINS if s not in already_loaded]
+
+    log(f"Loading last {days} days of {price_type} prices for {len(remaining)} coins")
 
     total_inserted = 0
     missing = []
+    CHUNK_SIZE = 200 
 
-    for symbol in coins:
-        # if is_already_loaded(symbol, table=database_table):
-        #     log(f"{symbol}: already loaded, skipping...")
-        #     continue
-        
-        if symbol in already_loaded:
-            continue
-
-        csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_{csv_name}.csv")
+    for symbol in remaining:
+        csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_{csv_suffix}.csv")
 
         if not os.path.exists(csv_path):
-            log(f"WARNING: No {price_type} prices CSV found for {symbol}, skipping...")
             missing.append(symbol)
             continue
 
         try:
-            with open(csv_path, 'r', newline='') as csv_file:
-                next(csv_file)
-                buffer = StringIO(''.join(f"{symbol},{line}" for line in csv_file))
+            df = pd.read_csv(
+                csv_path,
+                usecols=['timestamp_ms', 'timestamp', 'open', 'high',
+                         'low', 'close', 'volume'],
+                dtype={
+                    'timestamp_ms': 'int64',
+                    'open': 'float64', 'high': 'float64',
+                    'low':  'float64', 'close':'float64',
+                    'volume': 'float64',
+                }
+            )
+            df = df[df['timestamp_ms'] >= cutoff_ms]
 
-            with get_connection() as conn:
-                with conn.cursor() as cur:
-                    cur.copy_expert(f"""
-                        COPY {database_table}
-                            (symbol, timestamp, timestamp_ms, open, high, low, close, volume)
-                        FROM STDIN WITH CSV
-                    """, buffer)
-                    rows_inserted = cur.rowcount
-                conn.commit()
+            if df.empty:
+                log(f"  {symbol}: no data in last {days} days, skipping")
+                continue
 
-            total_inserted += rows_inserted
-            log(f"{symbol}: inserted {rows_inserted} rows")
+            rows = [
+                (symbol, int(r.timestamp_ms), r.timestamp,
+                 r.open, r.high, r.low, r.close, r.volume)
+                for r in df.itertuples(index=False)
+            ]
+
+            sql = f"""
+                INSERT INTO {database_table}
+                    (symbol, timestamp_ms, timestamp,
+                     open, high, low, close, volume)
+                VALUES %s
+                ON CONFLICT (symbol, timestamp_ms) DO NOTHING
+            """
+
+            symbol_inserted = 0
+            for i in range(0, len(rows), CHUNK_SIZE):
+                chunk = rows[i : i + CHUNK_SIZE]
+                with get_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SET LOCAL statement_timeout = '120s'")
+                        execute_values(cur, sql, chunk, page_size=100)
+                    conn.commit()
+                symbol_inserted += len(chunk)
+
+            total_inserted += symbol_inserted
+            log(f"  {symbol}: inserted {symbol_inserted:,} rows "
+                f"({len(rows)//CHUNK_SIZE + 1} chunks)")
 
         except Exception as e:
-            log(f"ERROR on {symbol}: {e}")
+            log(f"  {symbol}: ERROR — {e}")
             missing.append(symbol)
-            continue
 
-    log(f"\nDone. Total rows inserted: {total_inserted}")
-
+    log(f"\nDone. Total inserted: {total_inserted:,}")
     if missing:
-        log(f"Missing or failed CSVs for {len(missing)} coins: {missing}")
+        log(f"Missing/failed: {missing}")
 
     return total_inserted
 
@@ -491,17 +529,17 @@ def get_coin_universe_from_database():
     
 
 if __name__ == "__main__":
-    log(f"Setting up Supabase database...")
-    create_tables()
+    # log(f"Setting up Supabase database...")
+    # create_tables()
 
-    log(f"Inserting coin info into the coin_universe database table...")
-    seed_coin_universe_table_from_json()
+    # log(f"Inserting coin info into the coin_universe database table...")
+    # seed_coin_universe_table_from_json()
 
-    log(f"\nLoading historical funding rates...")
-    insert_funding_rates()
+    # log(f"\nLoading historical funding rates...")
+    # insert_funding_rates(days=90)
 
     log(f"\nLoading historical perp prices...")
-    insert_prices('perp', 'perp_prices', 'perp_hourly')
+    insert_prices('perp', 'perp_prices', 'perp_hourly', days=90)
 
     log(f"\nLoading historical spot prices...")
-    insert_prices('spot', 'spot_prices', 'spot_hourly')
+    insert_prices('spot', 'spot_prices', 'spot_hourly', days=90)

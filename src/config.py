@@ -71,7 +71,7 @@ def get_coin_list():
         data = json.load(f)
 
     coin_list = []
-    for tier in ('large_cap', 'mid_cap'):
+    for tier in ('large_cap', 'mid_cap', 'small_cap'):
         for coin in data[tier]:
             coin_list.append(coin['symbol'])
 
@@ -85,7 +85,7 @@ def get_coin_metadata():
         data = json.load(f)
 
     coin_metadata = {}
-    for tier in ('large_cap', 'mid_cap'):
+    for tier in ('large_cap', 'mid_cap', 'small_cap'):
         for coin in data[tier]:
             coin_metadata[coin['symbol']] = {
                 'name': coin['name'],
@@ -97,5 +97,5 @@ def get_coin_metadata():
     return coin_metadata
 
 
-COIN_LIST = get_coin_list()
+ALL_COINS = get_coin_list()
 MARKET_CAP_LOOKUP = get_coin_metadata()
