@@ -1,0 +1,49 @@
+name: Debug Bybit Domains
+
+on:
+  workflow_dispatch:  # Only runs when you manually trigger it
+
+jobs:
+  debug-domains:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install requests
+        run: pip install requests
+      
+      - name: Test Bybit domains
+        run: |
+          python -c "
+import requests
+
+domains = [
+    'https://api.bybit.com',
+    'https://api.bytick.com',
+]
+
+HEADERS = {'User-Agent': 'Mozilla/5.0 (compatible; DriftexBot/1.0)'}
+
+print('Testing Bybit domains from GitHub Actions...\n')
+
+for domain in domains:
+    url = f'{domain}/v5/market/tickers?category=linear&symbol=BTCUSDT'
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=10)
+        print(f'✅ {domain}: SUCCESS (status {resp.status_code})')
+        # Optional: show a bit of the response to verify it's real data
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get('retCode') == 0:
+                price = data['result']['list'][0]['lastPrice']
+                print(f'   BTC price via {domain}: ${price}')
+    except Exception as e:
+        print(f'❌ {domain}: FAILED — {e}')
+"
