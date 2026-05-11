@@ -1,6 +1,6 @@
 # Generated data files
-coin_universe.json
-*.json
+collection_progress.json
+market_cap_classification.json
 data/
 *.csv
 *.db
