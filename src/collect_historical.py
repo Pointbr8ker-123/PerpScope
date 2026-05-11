@@ -38,6 +38,17 @@ def fetch_funding_rates_page(symbol, start_ms, end_ms, limit=200):
 
     try:
         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+
+        if response.status_code != 200:
+            log(f"[{symbol}] HTTP {response.status_code} for funding_rates")
+            return None
+        
+        content = response.text.strip()
+        if not content or content[0] not in ('{', '['):
+            log(f"[{symbol}] Non-JSON response for funding_rates"
+                f"{content[:100]}")
+            return None
+        
         data = response.json()
 
         if data['retCode'] != 0:
@@ -45,8 +56,14 @@ def fetch_funding_rates_page(symbol, start_ms, end_ms, limit=200):
 
         return data['result']['list']
     
+    except requests.exceptions.Timeout:
+        log(f"[{symbol}] Timeout for funding_rates")
+        return None
+    except requests.exceptions.ConnectionError:
+        log(f" {symbol}] Connection error for funding_rates")
+        return None
     except Exception as e:
-        log(f"Request Failed for {symbol} funding: {e}")
+        log(f"[{symbol}] Request Error for funding_rates: {e}")
         return None
     
 
@@ -142,15 +159,33 @@ def fetch_klines_page(symbol, category, start_ms, end_ms, interval=60, limit=200
 
     try:
         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+
+        if response.status_code != 200:
+            log(f"[{symbol}] HTTP {response.status_code} for {category} klines")
+            return None
+        
+        content = response.text.strip()
+        if not content or content[0] not in ('{', '['):
+            log(f"[{symbol}] Non-JSON response for {category} klines:"
+                f"{content[:100]}")
+            return None
+        
         data = response.json()
 
         if data['retCode'] != 0:
             log(f"API Error for {symbol} klines: {data['retMsg']}")
+            return None
 
         return data['result']['list']
 
+    except requests.exceptions.Timeout:
+        log(f"[{symbol}] Timeout for {category} klines")
+        return None
+    except requests.exceptions.ConnectionError:
+        log(f"[{symbol}] Connection error for {category} klines")
+        return None
     except Exception as e:
-        log(f"Request Error for {symbol} klines: {e}")
+        log(f"[{symbol}] Request Error for {category} klines: {e}")
         return None
 
 

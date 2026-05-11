@@ -30,7 +30,7 @@ PRODUCT_UNIVERSE = coin_universe['product_universe']
 
 
 # API Settings
-BASE_URL = "https://api.bytick.com"
+BASE_URL = "https://api.bybit.com"
 REQUEST_TIMEOUT = 10
 SLEEP_BETWEEN_CALLS = 2.0
 SLEEP_BETWEEN_COINS = 1.0
