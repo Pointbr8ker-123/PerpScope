@@ -1,0 +1,2132 @@
+{
+  "generated_at": "2026-05-04T14:51:10.498713",
+  "large_cap": [
+    {
+      "symbol": "BTCUSDT",
+      "name": "Bitcoin",
+      "rank": 1,
+      "market_cap": 1579983659619,
+      "coingecko_id": "bitcoin"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "name": "Ethereum",
+      "rank": 2,
+      "market_cap": 282259423253,
+      "coingecko_id": "ethereum"
+    },
+    {
+      "symbol": "XRPUSDT",
+      "name": "XRP",
+      "rank": 4,
+      "market_cap": 86318222771,
+      "coingecko_id": "ripple"
+    },
+    {
+      "symbol": "BNBUSDT",
+      "name": "BNB",
+      "rank": 5,
+      "market_cap": 84070336772,
+      "coingecko_id": "binancecoin"
+    },
+    {
+      "symbol": "USDCUSDT",
+      "name": "USDC",
+      "rank": 6,
+      "market_cap": 77394587667,
+      "coingecko_id": "usd-coin"
+    },
+    {
+      "symbol": "SOLUSDT",
+      "name": "Solana",
+      "rank": 7,
+      "market_cap": 48499783637,
+      "coingecko_id": "solana"
+    },
+    {
+      "symbol": "TRXUSDT",
+      "name": "TRON",
+      "rank": 8,
+      "market_cap": 32008782088,
+      "coingecko_id": "tron"
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "name": "Dogecoin",
+      "rank": 10,
+      "market_cap": 17103616678,
+      "coingecko_id": "dogecoin"
+    },
+    {
+      "symbol": "HYPEUSDT",
+      "name": "Hyperliquid",
+      "rank": 13,
+      "market_cap": 9786513485,
+      "coingecko_id": "hyperliquid"
+    },
+    {
+      "symbol": "ADAUSDT",
+      "name": "Cardano",
+      "rank": 15,
+      "market_cap": 9249275207,
+      "coingecko_id": "cardano"
+    },
+    {
+      "symbol": "BCHUSDT",
+      "name": "Bitcoin Cash",
+      "rank": 16,
+      "market_cap": 8918043225,
+      "coingecko_id": "bitcoin-cash"
+    },
+    {
+      "symbol": "LINKUSDT",
+      "name": "Chainlink",
+      "rank": 19,
+      "market_cap": 6857261558,
+      "coingecko_id": "chainlink"
+    },
+    {
+      "symbol": "CCUSDT",
+      "name": "Canton",
+      "rank": 20,
+      "market_cap": 5610817264,
+      "coingecko_id": "canton-network"
+    }
+  ],
+  "mid_cap": [
+    {
+      "symbol": "XLMUSDT",
+      "name": "Stellar",
+      "rank": 21,
+      "market_cap": 5250278507,
+      "coingecko_id": "stellar"
+    },
+    {
+      "symbol": "USD1USDT",
+      "name": "USD1",
+      "rank": 22,
+      "market_cap": 4511534630,
+      "coingecko_id": "usd1-wlfi"
+    },
+    {
+      "symbol": "LTCUSDT",
+      "name": "Litecoin",
+      "rank": 24,
+      "market_cap": 4259116133,
+      "coingecko_id": "litecoin"
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "name": "Avalanche",
+      "rank": 25,
+      "market_cap": 3943119692,
+      "coingecko_id": "avalanche-2"
+    },
+    {
+      "symbol": "USDEUSDT",
+      "name": "Ethena USDe",
+      "rank": 26,
+      "market_cap": 3905721815,
+      "coingecko_id": "ethena-usde"
+    },
+    {
+      "symbol": "HBARUSDT",
+      "name": "Hedera",
+      "rank": 27,
+      "market_cap": 3822963342,
+      "coingecko_id": "hedera-hashgraph"
+    },
+    {
+      "symbol": "SUIUSDT",
+      "name": "Sui",
+      "rank": 28,
+      "market_cap": 3718609203,
+      "coingecko_id": "sui"
+    },
+    {
+      "symbol": "TONUSDT",
+      "name": "Toncoin",
+      "rank": 29,
+      "market_cap": 3702486770,
+      "coingecko_id": "the-open-network"
+    },
+    {
+      "symbol": "XAUTUSDT",
+      "name": "Tether Gold",
+      "rank": 37,
+      "market_cap": 2701874001,
+      "coingecko_id": "tether-gold"
+    },
+    {
+      "symbol": "MNTUSDT",
+      "name": "Mantle",
+      "rank": 41,
+      "market_cap": 2108414321,
+      "coingecko_id": "mantle"
+    },
+    {
+      "symbol": "UNIUSDT",
+      "name": "Uniswap",
+      "rank": 42,
+      "market_cap": 2076974766,
+      "coingecko_id": "uniswap"
+    },
+    {
+      "symbol": "DOTUSDT",
+      "name": "Polkadot",
+      "rank": 43,
+      "market_cap": 2057409025,
+      "coingecko_id": "polkadot"
+    },
+    {
+      "symbol": "WLFIUSDT",
+      "name": "World Liberty Financial",
+      "rank": 44,
+      "market_cap": 1916734682,
+      "coingecko_id": "world-liberty-financial"
+    },
+    {
+      "symbol": "SKYUSDT",
+      "name": "Sky",
+      "rank": 45,
+      "market_cap": 1835729230,
+      "coingecko_id": "sky"
+    },
+    {
+      "symbol": "ASTERUSDT",
+      "name": "Aster",
+      "rank": 49,
+      "market_cap": 1737225173,
+      "coingecko_id": "aster-2"
+    },
+    {
+      "symbol": "NEARUSDT",
+      "name": "NEAR Protocol",
+      "rank": 52,
+      "market_cap": 1622477905,
+      "coingecko_id": "near"
+    },
+    {
+      "symbol": "RLUSDUSDT",
+      "name": "Ripple USD",
+      "rank": 53,
+      "market_cap": 1550560434,
+      "coingecko_id": "ripple-usd"
+    },
+    {
+      "symbol": "ONDOUSDT",
+      "name": "Ondo",
+      "rank": 54,
+      "market_cap": 1501124269,
+      "coingecko_id": "ondo-finance"
+    },
+    {
+      "symbol": "AAVEUSDT",
+      "name": "Aave",
+      "rank": 57,
+      "market_cap": 1403421232,
+      "coingecko_id": "aave"
+    },
+    {
+      "symbol": "ETCUSDT",
+      "name": "Ethereum Classic",
+      "rank": 58,
+      "market_cap": 1360918831,
+      "coingecko_id": "ethereum-classic"
+    },
+    {
+      "symbol": "ICPUSDT",
+      "name": "Internet Computer",
+      "rank": 62,
+      "market_cap": 1304315235,
+      "coingecko_id": "internet-computer"
+    },
+    {
+      "symbol": "MORPHOUSDT",
+      "name": "Morpho",
+      "rank": 63,
+      "market_cap": 1202592096,
+      "coingecko_id": "morpho"
+    },
+    {
+      "symbol": "POLUSDT",
+      "name": "POL (ex-MATIC)",
+      "rank": 66,
+      "market_cap": 1021702917,
+      "coingecko_id": "polygon-ecosystem-token"
+    },
+    {
+      "symbol": "ALGOUSDT",
+      "name": "Algorand",
+      "rank": 67,
+      "market_cap": 1006923908,
+      "coingecko_id": "algorand"
+    },
+    {
+      "symbol": "QNTUSDT",
+      "name": "Quant",
+      "rank": 68,
+      "market_cap": 988029547,
+      "coingecko_id": "quant-network"
+    },
+    {
+      "symbol": "ATOMUSDT",
+      "name": "Cosmos Hub",
+      "rank": 72,
+      "market_cap": 950202297,
+      "coingecko_id": "cosmos"
+    },
+    {
+      "symbol": "RENDERUSDT",
+      "name": "Render",
+      "rank": 73,
+      "market_cap": 947053408,
+      "coingecko_id": "render-token"
+    },
+    {
+      "symbol": "KASUSDT",
+      "name": "Kaspa",
+      "rank": 74,
+      "market_cap": 923538355,
+      "coingecko_id": "kaspa"
+    },
+    {
+      "symbol": "ENAUSDT",
+      "name": "Ethena",
+      "rank": 75,
+      "market_cap": 901763185,
+      "coingecko_id": "ethena"
+    },
+    {
+      "symbol": "APTUSDT",
+      "name": "Aptos",
+      "rank": 78,
+      "market_cap": 785849738,
+      "coingecko_id": "aptos"
+    },
+    {
+      "symbol": "WLDUSDT",
+      "name": "Worldcoin",
+      "rank": 79,
+      "market_cap": 783974562,
+      "coingecko_id": "worldcoin-wld"
+    },
+    {
+      "symbol": "STABLEUSDT",
+      "name": "\u200b\u200bStable",
+      "rank": 80,
+      "market_cap": 735975634,
+      "coingecko_id": "stable-2"
+    },
+    {
+      "symbol": "FILUSDT",
+      "name": "Filecoin",
+      "rank": 82,
+      "market_cap": 726331098,
+      "coingecko_id": "filecoin"
+    },
+    {
+      "symbol": "ARBUSDT",
+      "name": "Arbitrum",
+      "rank": 83,
+      "market_cap": 707111431,
+      "coingecko_id": "arbitrum"
+    },
+    {
+      "symbol": "JSTUSDT",
+      "name": "JUST",
+      "rank": 84,
+      "market_cap": 695894904,
+      "coingecko_id": "just"
+    },
+    {
+      "symbol": "FLRUSDT",
+      "name": "Flare",
+      "rank": 86,
+      "market_cap": 647692291,
+      "coingecko_id": "flare-networks"
+    },
+    {
+      "symbol": "PENGUUSDT",
+      "name": "Pudgy Penguins",
+      "rank": 87,
+      "market_cap": 628305721,
+      "coingecko_id": "pudgy-penguins"
+    },
+    {
+      "symbol": "VETUSDT",
+      "name": "VeChain",
+      "rank": 89,
+      "market_cap": 615369935,
+      "coingecko_id": "vechain"
+    },
+    {
+      "symbol": "JUPUSDT",
+      "name": "Jupiter",
+      "rank": 92,
+      "market_cap": 591693884,
+      "coingecko_id": "jupiter-exchange-solana"
+    },
+    {
+      "symbol": "XDCUSDT",
+      "name": "XDC Network",
+      "rank": 93,
+      "market_cap": 586363690,
+      "coingecko_id": "xdce-crowd-sale"
+    },
+    {
+      "symbol": "TRUMPUSDT",
+      "name": "Official Trump",
+      "rank": 100,
+      "market_cap": 536429223,
+      "coingecko_id": "official-trump"
+    }
+  ],
+  "small_cap": [
+    {
+      "symbol": "NIGHTUSDT",
+      "name": "Midnight",
+      "rank": 102,
+      "market_cap": 514677375,
+      "coingecko_id": "midnight-3"
+    },
+    {
+      "symbol": "CAKEUSDT",
+      "name": "PancakeSwap",
+      "rank": 107,
+      "market_cap": 489865920,
+      "coingecko_id": "pancakeswap-token"
+    },
+    {
+      "symbol": "VIRTUALUSDT",
+      "name": "Virtuals Protocol",
+      "rank": 108,
+      "market_cap": 488871638,
+      "coingecko_id": "virtual-protocol"
+    },
+    {
+      "symbol": "EDGEUSDT",
+      "name": "edgeX",
+      "rank": 111,
+      "market_cap": 446954025,
+      "coingecko_id": "edgex"
+    },
+    {
+      "symbol": "AEROUSDT",
+      "name": "Aerodrome Finance",
+      "rank": 116,
+      "market_cap": 415637794,
+      "coingecko_id": "aerodrome-finance"
+    },
+    {
+      "symbol": "STXUSDT",
+      "name": "Stacks",
+      "rank": 117,
+      "market_cap": 415396716,
+      "coingecko_id": "blockstack"
+    },
+    {
+      "symbol": "CHZUSDT",
+      "name": "Chiliz",
+      "rank": 118,
+      "market_cap": 415329850,
+      "coingecko_id": "chiliz"
+    },
+    {
+      "symbol": "SEIUSDT",
+      "name": "Sei",
+      "rank": 122,
+      "market_cap": 396254716,
+      "coingecko_id": "sei-network"
+    },
+    {
+      "symbol": "XTZUSDT",
+      "name": "Tezos",
+      "rank": 123,
+      "market_cap": 391774074,
+      "coingecko_id": "tezos"
+    },
+    {
+      "symbol": "INJUSDT",
+      "name": "Injective",
+      "rank": 125,
+      "market_cap": 371005767,
+      "coingecko_id": "injective-protocol"
+    },
+    {
+      "symbol": "SUNUSDT",
+      "name": "Sun Token",
+      "rank": 126,
+      "market_cap": 365961845,
+      "coingecko_id": "sun-token"
+    },
+    {
+      "symbol": "HUSDT",
+      "name": "Humanity",
+      "rank": 127,
+      "market_cap": 364538431,
+      "coingecko_id": "humanity"
+    },
+    {
+      "symbol": "MONUSDT",
+      "name": "Monad",
+      "rank": 128,
+      "market_cap": 355276253,
+      "coingecko_id": "monad"
+    },
+    {
+      "symbol": "CRVUSDT",
+      "name": "Curve DAO",
+      "rank": 129,
+      "market_cap": 355197149,
+      "coingecko_id": "curve-dao-token"
+    },
+    {
+      "symbol": "SPXUSDT",
+      "name": "SPX6900",
+      "rank": 132,
+      "market_cap": 349152204,
+      "coingecko_id": "spx6900"
+    },
+    {
+      "symbol": "ETHFIUSDT",
+      "name": "Ether.fi",
+      "rank": 134,
+      "market_cap": 348282612,
+      "coingecko_id": "ether-fi"
+    },
+    {
+      "symbol": "ZROUSDT",
+      "name": "LayerZero",
+      "rank": 136,
+      "market_cap": 338625559,
+      "coingecko_id": "layerzero"
+    },
+    {
+      "symbol": "TIAUSDT",
+      "name": "Celestia",
+      "rank": 141,
+      "market_cap": 316688476,
+      "coingecko_id": "celestia"
+    },
+    {
+      "symbol": "LDOUSDT",
+      "name": "Lido DAO",
+      "rank": 145,
+      "market_cap": 312438575,
+      "coingecko_id": "lido-dao"
+    },
+    {
+      "symbol": "2ZUSDT",
+      "name": "DoubleZero",
+      "rank": 149,
+      "market_cap": 293836697,
+      "coingecko_id": "doublezero"
+    },
+    {
+      "symbol": "PENDLEUSDT",
+      "name": "Pendle",
+      "rank": 151,
+      "market_cap": 291821362,
+      "coingecko_id": "pendle"
+    },
+    {
+      "symbol": "PYTHUSDT",
+      "name": "Pyth Network",
+      "rank": 155,
+      "market_cap": 279844567,
+      "coingecko_id": "pyth-network"
+    },
+    {
+      "symbol": "JASMYUSDT",
+      "name": "JasmyCoin",
+      "rank": 157,
+      "market_cap": 277496484,
+      "coingecko_id": "jasmycoin"
+    },
+    {
+      "symbol": "KAIAUSDT",
+      "name": "Kaia",
+      "rank": 160,
+      "market_cap": 266415493,
+      "coingecko_id": "kaia"
+    },
+    {
+      "symbol": "GRTUSDT",
+      "name": "The Graph",
+      "rank": 161,
+      "market_cap": 264792152,
+      "coingecko_id": "the-graph"
+    },
+    {
+      "symbol": "OPUSDT",
+      "name": "Optimism",
+      "rank": 162,
+      "market_cap": 261801190,
+      "coingecko_id": "optimism"
+    },
+    {
+      "symbol": "LITUSDT",
+      "name": "Lighter",
+      "rank": 170,
+      "market_cap": 237846270,
+      "coingecko_id": "lighter"
+    },
+    {
+      "symbol": "ENSUSDT",
+      "name": "Ethereum Name Service",
+      "rank": 171,
+      "market_cap": 236725791,
+      "coingecko_id": "ethereum-name-service"
+    },
+    {
+      "symbol": "STRKUSDT",
+      "name": "Starknet",
+      "rank": 172,
+      "market_cap": 226662880,
+      "coingecko_id": "starknet"
+    },
+    {
+      "symbol": "AXSUSDT",
+      "name": "Axie Infinity",
+      "rank": 173,
+      "market_cap": 226245189,
+      "coingecko_id": "axie-infinity"
+    },
+    {
+      "symbol": "XPLUSDT",
+      "name": "Plasma",
+      "rank": 174,
+      "market_cap": 221771713,
+      "coingecko_id": "plasma"
+    },
+    {
+      "symbol": "COMPUSDT",
+      "name": "Compound",
+      "rank": 175,
+      "market_cap": 221723155,
+      "coingecko_id": "compound-governance-token"
+    },
+    {
+      "symbol": "THETAUSDT",
+      "name": "Theta Network",
+      "rank": 179,
+      "market_cap": 209631030,
+      "coingecko_id": "theta-token"
+    },
+    {
+      "symbol": "GRASSUSDT",
+      "name": "Grass",
+      "rank": 182,
+      "market_cap": 199137550,
+      "coingecko_id": "grass"
+    },
+    {
+      "symbol": "SANDUSDT",
+      "name": "The Sandbox",
+      "rank": 187,
+      "market_cap": 194412635,
+      "coingecko_id": "the-sandbox"
+    },
+    {
+      "symbol": "WIFUSDT",
+      "name": "dogwifhat",
+      "rank": 188,
+      "market_cap": 191425924,
+      "coingecko_id": "dogwifcoin"
+    },
+    {
+      "symbol": "RUNEUSDT",
+      "name": "THORChain",
+      "rank": 192,
+      "market_cap": 181713830,
+      "coingecko_id": "thorchain"
+    },
+    {
+      "symbol": "TWTUSDT",
+      "name": "Trust Wallet",
+      "rank": 194,
+      "market_cap": 179417087,
+      "coingecko_id": "trust-wallet-token"
+    },
+    {
+      "symbol": "JTOUSDT",
+      "name": "Jito",
+      "rank": 195,
+      "market_cap": 179348018,
+      "coingecko_id": "jito-governance-token"
+    },
+    {
+      "symbol": "IPUSDT",
+      "name": "Story",
+      "rank": 197,
+      "market_cap": 176590030,
+      "coingecko_id": "story-2"
+    },
+    {
+      "symbol": "PIEVERSEUSDT",
+      "name": "Pieverse",
+      "rank": 200,
+      "market_cap": 172474302,
+      "coingecko_id": "pieverse"
+    },
+    {
+      "symbol": "HNTUSDT",
+      "name": "Helium",
+      "rank": 201,
+      "market_cap": 171923128,
+      "coingecko_id": "helium"
+    },
+    {
+      "symbol": "ZKUSDT",
+      "name": "ZKsync",
+      "rank": 202,
+      "market_cap": 169820862,
+      "coingecko_id": "zksync"
+    },
+    {
+      "symbol": "MANAUSDT",
+      "name": "Decentraland",
+      "rank": 203,
+      "market_cap": 169659358,
+      "coingecko_id": "decentraland"
+    },
+    {
+      "symbol": "BSBUSDT",
+      "name": "Block Street",
+      "rank": 205,
+      "market_cap": 168887938,
+      "coingecko_id": "block-street"
+    },
+    {
+      "symbol": "APEUSDT",
+      "name": "ApeCoin",
+      "rank": 206,
+      "market_cap": 168864098,
+      "coingecko_id": "apecoin"
+    },
+    {
+      "symbol": "SUSDT",
+      "name": "Sonic",
+      "rank": 208,
+      "market_cap": 167178401,
+      "coingecko_id": "sonic-3"
+    },
+    {
+      "symbol": "WALUSDT",
+      "name": "Walrus",
+      "rank": 210,
+      "market_cap": 165320717,
+      "coingecko_id": "walrus-2"
+    },
+    {
+      "symbol": "BATUSDT",
+      "name": "Basic Attention",
+      "rank": 217,
+      "market_cap": 156801586,
+      "coingecko_id": "basic-attention-token"
+    },
+    {
+      "symbol": "GALAUSDT",
+      "name": "GALA",
+      "rank": 227,
+      "market_cap": 148979821,
+      "coingecko_id": "gala"
+    },
+    {
+      "symbol": "FFUSDT",
+      "name": "Falcon Finance",
+      "rank": 230,
+      "market_cap": 144310449,
+      "coingecko_id": "falcon-finance-ff"
+    },
+    {
+      "symbol": "MEGAUSDT",
+      "name": "MegaETH",
+      "rank": 231,
+      "market_cap": 143989936,
+      "coingecko_id": "megaeth"
+    },
+    {
+      "symbol": "AUSDT",
+      "name": "Vaulta",
+      "rank": 233,
+      "market_cap": 143140474,
+      "coingecko_id": "vaulta"
+    },
+    {
+      "symbol": "ARUSDT",
+      "name": "Arweave",
+      "rank": 235,
+      "market_cap": 142879036,
+      "coingecko_id": "arweave"
+    },
+    {
+      "symbol": "IMXUSDT",
+      "name": "Immutable",
+      "rank": 238,
+      "market_cap": 141778252,
+      "coingecko_id": "immutable-x"
+    },
+    {
+      "symbol": "1INCHUSDT",
+      "name": "1INCH",
+      "rank": 241,
+      "market_cap": 134158063,
+      "coingecko_id": "1inch"
+    },
+    {
+      "symbol": "SOSOUSDT",
+      "name": "SoSoValue",
+      "rank": 244,
+      "market_cap": 132684882,
+      "coingecko_id": "sosovalue"
+    },
+    {
+      "symbol": "ZENUSDT",
+      "name": "Horizen",
+      "rank": 245,
+      "market_cap": 131209071,
+      "coingecko_id": "zencash"
+    },
+    {
+      "symbol": "CFGUSDT",
+      "name": "Centrifuge",
+      "rank": 247,
+      "market_cap": 129377470,
+      "coingecko_id": "centrifuge-2"
+    },
+    {
+      "symbol": "EIGENUSDT",
+      "name": "EigenCloud (prev. EigenLayer)",
+      "rank": 248,
+      "market_cap": 128417522,
+      "coingecko_id": "eigenlayer"
+    },
+    {
+      "symbol": "FLUIDUSDT",
+      "name": "Fluid",
+      "rank": 253,
+      "market_cap": 123842636,
+      "coingecko_id": "instadapp"
+    },
+    {
+      "symbol": "EGLDUSDT",
+      "name": "MultiversX",
+      "rank": 254,
+      "market_cap": 121548368,
+      "coingecko_id": "elrond-erd-2"
+    },
+    {
+      "symbol": "DYDXUSDT",
+      "name": "dYdX",
+      "rank": 255,
+      "market_cap": 121047343,
+      "coingecko_id": "dydx-chain"
+    },
+    {
+      "symbol": "SENTUSDT",
+      "name": "Sentient",
+      "rank": 256,
+      "market_cap": 120887689,
+      "coingecko_id": "sentient"
+    },
+    {
+      "symbol": "CHIPUSDT",
+      "name": "USD.AI",
+      "rank": 261,
+      "market_cap": 119284664,
+      "coingecko_id": "chip-2"
+    },
+    {
+      "symbol": "ATHUSDT",
+      "name": "Aethir",
+      "rank": 268,
+      "market_cap": 115955564,
+      "coingecko_id": "aethir"
+    },
+    {
+      "symbol": "0GUSDT",
+      "name": "0G",
+      "rank": 274,
+      "market_cap": 113706014,
+      "coingecko_id": "zero-gravity"
+    },
+    {
+      "symbol": "SNXUSDT",
+      "name": "Synthetix",
+      "rank": 279,
+      "market_cap": 109483809,
+      "coingecko_id": "havven"
+    },
+    {
+      "symbol": "ORDIUSDT",
+      "name": "ORDI",
+      "rank": 283,
+      "market_cap": 108670049,
+      "coingecko_id": "ordinals"
+    },
+    {
+      "symbol": "SAFEUSDT",
+      "name": "Safe",
+      "rank": 289,
+      "market_cap": 105378259,
+      "coingecko_id": "safe"
+    },
+    {
+      "symbol": "AXLUSDT",
+      "name": "Axelar",
+      "rank": 293,
+      "market_cap": 103988985,
+      "coingecko_id": "axelar"
+    },
+    {
+      "symbol": "ENJUSDT",
+      "name": "Enjin Coin",
+      "rank": 294,
+      "market_cap": 102611779,
+      "coingecko_id": "enjincoin"
+    },
+    {
+      "symbol": "SKRUSDT",
+      "name": "Seeker",
+      "rank": 297,
+      "market_cap": 100879467,
+      "coingecko_id": "seeker"
+    },
+    {
+      "symbol": "BEAMUSDT",
+      "name": "Beam",
+      "rank": 303,
+      "market_cap": 99747680,
+      "coingecko_id": "beam-2"
+    },
+    {
+      "symbol": "TRIAUSDT",
+      "name": "TRIA",
+      "rank": 304,
+      "market_cap": 98352952,
+      "coingecko_id": "tria"
+    },
+    {
+      "symbol": "SPKUSDT",
+      "name": "Spark",
+      "rank": 306,
+      "market_cap": 97448949,
+      "coingecko_id": "spark-2"
+    },
+    {
+      "symbol": "RVNUSDT",
+      "name": "Ravencoin",
+      "rank": 309,
+      "market_cap": 95562831,
+      "coingecko_id": "ravencoin"
+    },
+    {
+      "symbol": "YFIUSDT",
+      "name": "yearn.finance",
+      "rank": 310,
+      "market_cap": 94735322,
+      "coingecko_id": "yearn-finance"
+    },
+    {
+      "symbol": "BERAUSDT",
+      "name": "Berachain",
+      "rank": 311,
+      "market_cap": 94708343,
+      "coingecko_id": "berachain-bera"
+    },
+    {
+      "symbol": "QTUMUSDT",
+      "name": "Qtum",
+      "rank": 312,
+      "market_cap": 92881738,
+      "coingecko_id": "qtum"
+    },
+    {
+      "symbol": "ZRXUSDT",
+      "name": "0x Protocol",
+      "rank": 313,
+      "market_cap": 92696410,
+      "coingecko_id": "0x"
+    },
+    {
+      "symbol": "KMNOUSDT",
+      "name": "Kamino",
+      "rank": 315,
+      "market_cap": 91437283,
+      "coingecko_id": "kamino"
+    },
+    {
+      "symbol": "LINEAUSDT",
+      "name": "Linea",
+      "rank": 319,
+      "market_cap": 89397822,
+      "coingecko_id": "linea"
+    },
+    {
+      "symbol": "KSMUSDT",
+      "name": "Kusama",
+      "rank": 324,
+      "market_cap": 87317283,
+      "coingecko_id": "kusama"
+    },
+    {
+      "symbol": "ICNTUSDT",
+      "name": "Impossible Cloud Network Token",
+      "rank": 325,
+      "market_cap": 86877250,
+      "coingecko_id": "impossible-cloud-network-token"
+    },
+    {
+      "symbol": "BARDUSDT",
+      "name": "Lombard",
+      "rank": 328,
+      "market_cap": 85651152,
+      "coingecko_id": "lombard-protocol"
+    },
+    {
+      "symbol": "METUSDT",
+      "name": "Meteora",
+      "rank": 330,
+      "market_cap": 84925698,
+      "coingecko_id": "meteora"
+    },
+    {
+      "symbol": "ZETAUSDT",
+      "name": "ZetaChain",
+      "rank": 332,
+      "market_cap": 84196730,
+      "coingecko_id": "zetachain"
+    },
+    {
+      "symbol": "SAHARAUSDT",
+      "name": "Sahara AI",
+      "rank": 339,
+      "market_cap": 82677259,
+      "coingecko_id": "sahara-ai"
+    },
+    {
+      "symbol": "ZILUSDT",
+      "name": "Zilliqa",
+      "rank": 347,
+      "market_cap": 80091959,
+      "coingecko_id": "zilliqa"
+    },
+    {
+      "symbol": "BRETTUSDT",
+      "name": "Brett",
+      "rank": 348,
+      "market_cap": 80082294,
+      "coingecko_id": "based-brett"
+    },
+    {
+      "symbol": "ALCHUSDT",
+      "name": "Alchemist AI",
+      "rank": 353,
+      "market_cap": 79083365,
+      "coingecko_id": "alchemist-ai"
+    },
+    {
+      "symbol": "NXPCUSDT",
+      "name": "Nexpace",
+      "rank": 354,
+      "market_cap": 79069580,
+      "coingecko_id": "nexpace"
+    },
+    {
+      "symbol": "MINAUSDT",
+      "name": "Mina Protocol",
+      "rank": 358,
+      "market_cap": 78426005,
+      "coingecko_id": "mina-protocol"
+    },
+    {
+      "symbol": "CTCUSDT",
+      "name": "Creditcoin",
+      "rank": 360,
+      "market_cap": 78291377,
+      "coingecko_id": "creditcoin-2"
+    },
+    {
+      "symbol": "ROSEUSDT",
+      "name": "Oasis",
+      "rank": 363,
+      "market_cap": 77503155,
+      "coingecko_id": "oasis-network"
+    },
+    {
+      "symbol": "WUSDT",
+      "name": "Wormhole",
+      "rank": 367,
+      "market_cap": 76472455,
+      "coingecko_id": "wormhole"
+    },
+    {
+      "symbol": "FOGOUSDT",
+      "name": "Fogo",
+      "rank": 368,
+      "market_cap": 76451651,
+      "coingecko_id": "fogo"
+    },
+    {
+      "symbol": "BANUSDT",
+      "name": "Comedian",
+      "rank": 370,
+      "market_cap": 76162454,
+      "coingecko_id": "comedian"
+    },
+    {
+      "symbol": "AIOZUSDT",
+      "name": "AIOZ Network",
+      "rank": 375,
+      "market_cap": 75061691,
+      "coingecko_id": "aioz-network"
+    },
+    {
+      "symbol": "DEEPUSDT",
+      "name": "DeepBook",
+      "rank": 376,
+      "market_cap": 75048074,
+      "coingecko_id": "deep"
+    },
+    {
+      "symbol": "TACUSDT",
+      "name": "TAC",
+      "rank": 383,
+      "market_cap": 74215290,
+      "coingecko_id": "tac"
+    },
+    {
+      "symbol": "GMXUSDT",
+      "name": "GMX",
+      "rank": 385,
+      "market_cap": 73551378,
+      "coingecko_id": "gmx"
+    },
+    {
+      "symbol": "ARKMUSDT",
+      "name": "Arkham",
+      "rank": 387,
+      "market_cap": 73111828,
+      "coingecko_id": "arkham"
+    },
+    {
+      "symbol": "BLURUSDT",
+      "name": "Blur",
+      "rank": 388,
+      "market_cap": 72824299,
+      "coingecko_id": "blur"
+    },
+    {
+      "symbol": "DBRUSDT",
+      "name": "deBridge",
+      "rank": 390,
+      "market_cap": 72569608,
+      "coingecko_id": "debridge"
+    },
+    {
+      "symbol": "KAVAUSDT",
+      "name": "Kava",
+      "rank": 395,
+      "market_cap": 71147544,
+      "coingecko_id": "kava"
+    },
+    {
+      "symbol": "FLOWUSDT",
+      "name": "Flow",
+      "rank": 400,
+      "market_cap": 69143364,
+      "coingecko_id": "flow"
+    },
+    {
+      "symbol": "PLUMEUSDT",
+      "name": "Plume",
+      "rank": 411,
+      "market_cap": 65009639,
+      "coingecko_id": "plume"
+    },
+    {
+      "symbol": "ZAMAUSDT",
+      "name": "Zama",
+      "rank": 413,
+      "market_cap": 64753246,
+      "coingecko_id": "zama"
+    },
+    {
+      "symbol": "MOVEUSDT",
+      "name": "Movement",
+      "rank": 415,
+      "market_cap": 64435750,
+      "coingecko_id": "movement"
+    },
+    {
+      "symbol": "PNUTUSDT",
+      "name": "Peanut the Squirrel",
+      "rank": 430,
+      "market_cap": 60458052,
+      "coingecko_id": "peanut-the-squirrel"
+    },
+    {
+      "symbol": "SUSHIUSDT",
+      "name": "Sushi",
+      "rank": 436,
+      "market_cap": 59444962,
+      "coingecko_id": "sushi"
+    },
+    {
+      "symbol": "AZTECUSDT",
+      "name": "Aztec",
+      "rank": 437,
+      "market_cap": 59347597,
+      "coingecko_id": "aztec"
+    },
+    {
+      "symbol": "POPCATUSDT",
+      "name": "Popcat",
+      "rank": 438,
+      "market_cap": 59235008,
+      "coingecko_id": "popcat"
+    },
+    {
+      "symbol": "VELOUSDT",
+      "name": "Velo",
+      "rank": 442,
+      "market_cap": 58682127,
+      "coingecko_id": "velo"
+    },
+    {
+      "symbol": "ZORAUSDT",
+      "name": "Zora",
+      "rank": 452,
+      "market_cap": 55855040,
+      "coingecko_id": "zora"
+    },
+    {
+      "symbol": "MOCAUSDT",
+      "name": "Moca Network",
+      "rank": 460,
+      "market_cap": 54219724,
+      "coingecko_id": "mocaverse"
+    },
+    {
+      "symbol": "MEWUSDT",
+      "name": "cat in a dogs world",
+      "rank": 465,
+      "market_cap": 53687227,
+      "coingecko_id": "cat-in-a-dogs-world"
+    },
+    {
+      "symbol": "CELOUSDT",
+      "name": "Celo",
+      "rank": 466,
+      "market_cap": 53647805,
+      "coingecko_id": "celo"
+    },
+    {
+      "symbol": "MEUSDT",
+      "name": "Magic Eden",
+      "rank": 469,
+      "market_cap": 53273258,
+      "coingecko_id": "magic-eden"
+    },
+    {
+      "symbol": "OPGUSDT",
+      "name": "OpenGradient",
+      "rank": 472,
+      "market_cap": 53202914,
+      "coingecko_id": "opengradient"
+    },
+    {
+      "symbol": "ZBTUSDT",
+      "name": "ZEROBASE",
+      "rank": 476,
+      "market_cap": 52387529,
+      "coingecko_id": "zerobase"
+    },
+    {
+      "symbol": "REDUSDT",
+      "name": "RedStone",
+      "rank": 477,
+      "market_cap": 52206455,
+      "coingecko_id": "redstone-oracles"
+    },
+    {
+      "symbol": "HOMEUSDT",
+      "name": "HOME",
+      "rank": 479,
+      "market_cap": 51816780,
+      "coingecko_id": "home"
+    },
+    {
+      "symbol": "BRUSDT",
+      "name": "Bedrock",
+      "rank": 482,
+      "market_cap": 51727866,
+      "coingecko_id": "bedrock-token"
+    },
+    {
+      "symbol": "MASKUSDT",
+      "name": "Mask Network",
+      "rank": 492,
+      "market_cap": 49290580,
+      "coingecko_id": "mask-network"
+    },
+    {
+      "symbol": "MERLUSDT",
+      "name": "Merlin Chain",
+      "rank": 493,
+      "market_cap": 48798237,
+      "coingecko_id": "merlin-chain"
+    },
+    {
+      "symbol": "ANKRUSDT",
+      "name": "Ankr Network",
+      "rank": 495,
+      "market_cap": 48350092,
+      "coingecko_id": "ankr"
+    },
+    {
+      "symbol": "PROVEUSDT",
+      "name": "Succinct",
+      "rank": 499,
+      "market_cap": 47649936,
+      "coingecko_id": "succinct"
+    },
+    {
+      "symbol": "ALTUSDT",
+      "name": "AltLayer",
+      "rank": 501,
+      "market_cap": 47406348,
+      "coingecko_id": "altlayer"
+    },
+    {
+      "symbol": "AVNTUSDT",
+      "name": "Avantis",
+      "rank": 505,
+      "market_cap": 46489546,
+      "coingecko_id": "avantis"
+    },
+    {
+      "symbol": "SCUSDT",
+      "name": "Siacoin",
+      "rank": 509,
+      "market_cap": 45955187,
+      "coingecko_id": "siacoin"
+    },
+    {
+      "symbol": "VANAUSDT",
+      "name": "Vana",
+      "rank": 511,
+      "market_cap": 45647194,
+      "coingecko_id": "vana"
+    },
+    {
+      "symbol": "ROBOUSDT",
+      "name": "Fabric Protocol",
+      "rank": 524,
+      "market_cap": 43995226,
+      "coingecko_id": "robo-token-2"
+    },
+    {
+      "symbol": "RPLUSDT",
+      "name": "Rocket Pool",
+      "rank": 534,
+      "market_cap": 42095936,
+      "coingecko_id": "rocket-pool"
+    },
+    {
+      "symbol": "HYPERUSDT",
+      "name": "Hyperlane",
+      "rank": 537,
+      "market_cap": 42017615,
+      "coingecko_id": "hyperlane"
+    },
+    {
+      "symbol": "UMAUSDT",
+      "name": "UMA",
+      "rank": 538,
+      "market_cap": 41948369,
+      "coingecko_id": "uma"
+    },
+    {
+      "symbol": "SXTUSDT",
+      "name": "Space and Time",
+      "rank": 546,
+      "market_cap": 41432832,
+      "coingecko_id": "space-and-time"
+    },
+    {
+      "symbol": "NOTUSDT",
+      "name": "Notcoin",
+      "rank": 552,
+      "market_cap": 40855250,
+      "coingecko_id": "notcoin"
+    },
+    {
+      "symbol": "USTCUSDT",
+      "name": "TerraClassicUSD",
+      "rank": 553,
+      "market_cap": 40673643,
+      "coingecko_id": "terrausd"
+    },
+    {
+      "symbol": "WAVESUSDT",
+      "name": "Waves",
+      "rank": 554,
+      "market_cap": 40673382,
+      "coingecko_id": "waves"
+    },
+    {
+      "symbol": "COREUSDT",
+      "name": "Core",
+      "rank": 555,
+      "market_cap": 40665975,
+      "coingecko_id": "coredaoorg"
+    },
+    {
+      "symbol": "HOLOUSDT",
+      "name": "Holoworld",
+      "rank": 557,
+      "market_cap": 40622831,
+      "coingecko_id": "holoworld"
+    },
+    {
+      "symbol": "SSVUSDT",
+      "name": "SSV Network",
+      "rank": 561,
+      "market_cap": 40363499,
+      "coingecko_id": "ssv-network"
+    },
+    {
+      "symbol": "PEOPLEUSDT",
+      "name": "ConstitutionDAO",
+      "rank": 563,
+      "market_cap": 40186733,
+      "coingecko_id": "constitutiondao"
+    },
+    {
+      "symbol": "APEXUSDT",
+      "name": "APEX",
+      "rank": 566,
+      "market_cap": 40016762,
+      "coingecko_id": "apex-token-2"
+    },
+    {
+      "symbol": "ICXUSDT",
+      "name": "ICON",
+      "rank": 570,
+      "market_cap": 39862137,
+      "coingecko_id": "icon"
+    },
+    {
+      "symbol": "BIRBUSDT",
+      "name": "Moonbirds",
+      "rank": 571,
+      "market_cap": 39849194,
+      "coingecko_id": "moonbirds"
+    },
+    {
+      "symbol": "IOUSDT",
+      "name": "io.net",
+      "rank": 581,
+      "market_cap": 39114404,
+      "coingecko_id": "io"
+    },
+    {
+      "symbol": "ACHUSDT",
+      "name": "Alchemy Pay",
+      "rank": 584,
+      "market_cap": 38749901,
+      "coingecko_id": "alchemy-pay"
+    },
+    {
+      "symbol": "HUMAUSDT",
+      "name": "Huma Finance",
+      "rank": 592,
+      "market_cap": 37769735,
+      "coingecko_id": "huma-finance"
+    },
+    {
+      "symbol": "BOMEUSDT",
+      "name": "BOOK OF MEME",
+      "rank": 596,
+      "market_cap": 37376767,
+      "coingecko_id": "book-of-meme"
+    },
+    {
+      "symbol": "SCRTUSDT",
+      "name": "Secret",
+      "rank": 602,
+      "market_cap": 36920102,
+      "coingecko_id": "secret"
+    },
+    {
+      "symbol": "WOOUSDT",
+      "name": "WOO",
+      "rank": 604,
+      "market_cap": 36746829,
+      "coingecko_id": "woo-network"
+    },
+    {
+      "symbol": "SQDUSDT",
+      "name": "SQD",
+      "rank": 610,
+      "market_cap": 36157458,
+      "coingecko_id": "subsquid"
+    },
+    {
+      "symbol": "MEMEUSDT",
+      "name": "Memecoin",
+      "rank": 615,
+      "market_cap": 35578868,
+      "coingecko_id": "memecoin-2"
+    },
+    {
+      "symbol": "GPSUSDT",
+      "name": "GoPlus Security",
+      "rank": 629,
+      "market_cap": 34632872,
+      "coingecko_id": "goplus-security"
+    },
+    {
+      "symbol": "CYBERUSDT",
+      "name": "CYBER",
+      "rank": 645,
+      "market_cap": 33529180,
+      "coingecko_id": "cyberconnect"
+    },
+    {
+      "symbol": "CARVUSDT",
+      "name": "CARV",
+      "rank": 646,
+      "market_cap": 33363839,
+      "coingecko_id": "carv"
+    },
+    {
+      "symbol": "GMTUSDT",
+      "name": "GMT",
+      "rank": 650,
+      "market_cap": 33137154,
+      "coingecko_id": "stepn"
+    },
+    {
+      "symbol": "AIXBTUSDT",
+      "name": "aixbt",
+      "rank": 655,
+      "market_cap": 32606634,
+      "coingecko_id": "aixbt"
+    },
+    {
+      "symbol": "MANTAUSDT",
+      "name": "Manta Network",
+      "rank": 671,
+      "market_cap": 31522802,
+      "coingecko_id": "manta-network"
+    },
+    {
+      "symbol": "WAXPUSDT",
+      "name": "WAX",
+      "rank": 684,
+      "market_cap": 30778260,
+      "coingecko_id": "wax"
+    },
+    {
+      "symbol": "ZEREBROUSDT",
+      "name": "Zerebro",
+      "rank": 690,
+      "market_cap": 30419698,
+      "coingecko_id": "zerebro"
+    },
+    {
+      "symbol": "SIGNUSDT",
+      "name": "Sign",
+      "rank": 699,
+      "market_cap": 29856488,
+      "coingecko_id": "sign-global"
+    },
+    {
+      "symbol": "SOMIUSDT",
+      "name": "Somnia",
+      "rank": 706,
+      "market_cap": 29413888,
+      "coingecko_id": "somnia"
+    },
+    {
+      "symbol": "BREVUSDT",
+      "name": "Brevis",
+      "rank": 708,
+      "market_cap": 29322409,
+      "coingecko_id": "brevis"
+    },
+    {
+      "symbol": "BLASTUSDT",
+      "name": "Blast",
+      "rank": 713,
+      "market_cap": 29053211,
+      "coingecko_id": "blast"
+    },
+    {
+      "symbol": "MOVRUSDT",
+      "name": "Moonriver",
+      "rank": 742,
+      "market_cap": 27461259,
+      "coingecko_id": "moonriver"
+    },
+    {
+      "symbol": "MMTUSDT",
+      "name": "Momentum",
+      "rank": 745,
+      "market_cap": 27327609,
+      "coingecko_id": "momentum-3"
+    },
+    {
+      "symbol": "LAUSDT",
+      "name": "Lagrange",
+      "rank": 753,
+      "market_cap": 26682312,
+      "coingecko_id": "lagrange"
+    },
+    {
+      "symbol": "ANIMEUSDT",
+      "name": "Animecoin",
+      "rank": 770,
+      "market_cap": 26082722,
+      "coingecko_id": "anime"
+    },
+    {
+      "symbol": "CGPTUSDT",
+      "name": "ChainGPT",
+      "rank": 775,
+      "market_cap": 25840322,
+      "coingecko_id": "chaingpt"
+    },
+    {
+      "symbol": "SLPUSDT",
+      "name": "Smooth Love Potion",
+      "rank": 780,
+      "market_cap": 25694569,
+      "coingecko_id": "smooth-love-potion"
+    },
+    {
+      "symbol": "AGIUSDT",
+      "name": "Delysium",
+      "rank": 784,
+      "market_cap": 25630121,
+      "coingecko_id": "delysium"
+    },
+    {
+      "symbol": "AEVOUSDT",
+      "name": "Aevo",
+      "rank": 789,
+      "market_cap": 25418111,
+      "coingecko_id": "aevo-exchange"
+    },
+    {
+      "symbol": "OPNUSDT",
+      "name": "Opinion",
+      "rank": 802,
+      "market_cap": 24773788,
+      "coingecko_id": "opinion"
+    },
+    {
+      "symbol": "DEGENUSDT",
+      "name": "Degen",
+      "rank": 803,
+      "market_cap": 24750853,
+      "coingecko_id": "degen-base"
+    },
+    {
+      "symbol": "DRIFTUSDT",
+      "name": "Drift Protocol",
+      "rank": 812,
+      "market_cap": 23996418,
+      "coingecko_id": "drift-protocol"
+    },
+    {
+      "symbol": "DOODUSDT",
+      "name": "Doodles",
+      "rank": 815,
+      "market_cap": 23955667,
+      "coingecko_id": "doodles"
+    },
+    {
+      "symbol": "ERAUSDT",
+      "name": "Caldera",
+      "rank": 821,
+      "market_cap": 23476694,
+      "coingecko_id": "caldera"
+    },
+    {
+      "symbol": "CATIUSDT",
+      "name": "Catizen",
+      "rank": 825,
+      "market_cap": 23269456,
+      "coingecko_id": "catizen"
+    },
+    {
+      "symbol": "BLENDUSDT",
+      "name": "Fluent",
+      "rank": 839,
+      "market_cap": 22749347,
+      "coingecko_id": "fluent-network"
+    },
+    {
+      "symbol": "BASEDUSDT",
+      "name": "Based",
+      "rank": 844,
+      "market_cap": 22585366,
+      "coingecko_id": "based-one"
+    },
+    {
+      "symbol": "WETUSDT",
+      "name": "HumidiFi",
+      "rank": 845,
+      "market_cap": 22549009,
+      "coingecko_id": "humidifi"
+    },
+    {
+      "symbol": "ESUSDT",
+      "name": "Eclipse",
+      "rank": 849,
+      "market_cap": 22441248,
+      "coingecko_id": "eclipse-3"
+    },
+    {
+      "symbol": "XAIUSDT",
+      "name": "Xai",
+      "rank": 853,
+      "market_cap": 22185999,
+      "coingecko_id": "xai-blockchain"
+    },
+    {
+      "symbol": "AGLDUSDT",
+      "name": "Adventure Gold",
+      "rank": 859,
+      "market_cap": 21862923,
+      "coingecko_id": "adventure-gold"
+    },
+    {
+      "symbol": "XANUSDT",
+      "name": "Anoma",
+      "rank": 865,
+      "market_cap": 21666050,
+      "coingecko_id": "anoma"
+    },
+    {
+      "symbol": "ZKCUSDT",
+      "name": "Boundless",
+      "rank": 866,
+      "market_cap": 21595349,
+      "coingecko_id": "boundless"
+    },
+    {
+      "symbol": "FUSDT",
+      "name": "SynFutures",
+      "rank": 869,
+      "market_cap": 21527901,
+      "coingecko_id": "synfutures"
+    },
+    {
+      "symbol": "FLOCKUSDT",
+      "name": "FLOCK",
+      "rank": 872,
+      "market_cap": 21482864,
+      "coingecko_id": "flock-2"
+    },
+    {
+      "symbol": "MAGICUSDT",
+      "name": "Treasure",
+      "rank": 873,
+      "market_cap": 21451353,
+      "coingecko_id": "magic"
+    },
+    {
+      "symbol": "AVAUSDT",
+      "name": "AVA (Travala)",
+      "rank": 877,
+      "market_cap": 21300443,
+      "coingecko_id": "concierge-io"
+    },
+    {
+      "symbol": "ORDERUSDT",
+      "name": "Orderly",
+      "rank": 878,
+      "market_cap": 21286727,
+      "coingecko_id": "orderly-network"
+    },
+    {
+      "symbol": "YBUSDT",
+      "name": "Yield Basis",
+      "rank": 879,
+      "market_cap": 21285643,
+      "coingecko_id": "yield-basis"
+    },
+    {
+      "symbol": "LRCUSDT",
+      "name": "Loopring",
+      "rank": 882,
+      "market_cap": 21003506,
+      "coingecko_id": "loopring"
+    },
+    {
+      "symbol": "C98USDT",
+      "name": "Coin98",
+      "rank": 883,
+      "market_cap": 20999350,
+      "coingecko_id": "coin98"
+    },
+    {
+      "symbol": "TAIKOUSDT",
+      "name": "Taiko",
+      "rank": 884,
+      "market_cap": 20718804,
+      "coingecko_id": "taiko"
+    },
+    {
+      "symbol": "ENSOUSDT",
+      "name": "Enso",
+      "rank": 894,
+      "market_cap": 20098740,
+      "coingecko_id": "enso"
+    },
+    {
+      "symbol": "GOATUSDT",
+      "name": "Goatseus Maximus",
+      "rank": 919,
+      "market_cap": 19121548,
+      "coingecko_id": "goatseus-maximus"
+    },
+    {
+      "symbol": "TREEUSDT",
+      "name": "Tree",
+      "rank": 949,
+      "market_cap": 17781853,
+      "coingecko_id": "tree-capital"
+    },
+    {
+      "symbol": "BICOUSDT",
+      "name": "Biconomy",
+      "rank": 956,
+      "market_cap": 17653611,
+      "coingecko_id": "biconomy"
+    },
+    {
+      "symbol": "INITUSDT",
+      "name": "Initia",
+      "rank": 963,
+      "market_cap": 17508037,
+      "coingecko_id": "initia"
+    },
+    {
+      "symbol": "ELSAUSDT",
+      "name": "Elsa",
+      "rank": 971,
+      "market_cap": 17356610,
+      "coingecko_id": "elsa"
+    },
+    {
+      "symbol": "ZKPUSDT",
+      "name": "zkPass",
+      "rank": 976,
+      "market_cap": 17090815,
+      "coingecko_id": "zkpass"
+    },
+    {
+      "symbol": "B3USDT",
+      "name": "B3 (Base)",
+      "rank": 977,
+      "market_cap": 17020505,
+      "coingecko_id": "b3"
+    },
+    {
+      "symbol": "FIDAUSDT",
+      "name": "Bonfida",
+      "rank": 983,
+      "market_cap": 16828416,
+      "coingecko_id": "bonfida"
+    },
+    {
+      "symbol": "CHILLGUYUSDT",
+      "name": "Just a chill guy",
+      "rank": 991,
+      "market_cap": 16587021,
+      "coingecko_id": "chill-guy"
+    },
+    {
+      "symbol": "NEWTUSDT",
+      "name": "Newton Protocol",
+      "rank": 1004,
+      "market_cap": 15903592,
+      "coingecko_id": "newton-protocol"
+    },
+    {
+      "symbol": "DOLOUSDT",
+      "name": "Dolomite",
+      "rank": 1014,
+      "market_cap": 15384429,
+      "coingecko_id": "dolomite"
+    },
+    {
+      "symbol": "GODSUSDT",
+      "name": "Gods Unchained",
+      "rank": 1067,
+      "market_cap": 13666507,
+      "coingecko_id": "gods-unchained"
+    },
+    {
+      "symbol": "SONICUSDT",
+      "name": "Sonic SVM",
+      "rank": 1078,
+      "market_cap": 13301529,
+      "coingecko_id": "sonic-svm"
+    },
+    {
+      "symbol": "TNSRUSDT",
+      "name": "Tensor",
+      "rank": 1079,
+      "market_cap": 13285898,
+      "coingecko_id": "tensor"
+    },
+    {
+      "symbol": "IDUSDT",
+      "name": "SPACE ID",
+      "rank": 1080,
+      "market_cap": 13277436,
+      "coingecko_id": "space-id"
+    },
+    {
+      "symbol": "BBUSDT",
+      "name": "BounceBit",
+      "rank": 1084,
+      "market_cap": 13197015,
+      "coingecko_id": "bouncebit"
+    },
+    {
+      "symbol": "BOBAUSDT",
+      "name": "Boba Network",
+      "rank": 1085,
+      "market_cap": 13193738,
+      "coingecko_id": "boba-network"
+    },
+    {
+      "symbol": "RECALLUSDT",
+      "name": "Recall",
+      "rank": 1090,
+      "market_cap": 13040695,
+      "coingecko_id": "recall"
+    },
+    {
+      "symbol": "COOKIEUSDT",
+      "name": "Cookie DAO",
+      "rank": 1109,
+      "market_cap": 12647458,
+      "coingecko_id": "cookie"
+    },
+    {
+      "symbol": "CLOUDUSDT",
+      "name": "Cloud",
+      "rank": 1115,
+      "market_cap": 12304591,
+      "coingecko_id": "sanctum-2"
+    },
+    {
+      "symbol": "WCTUSDT",
+      "name": "WalletConnect Token",
+      "rank": 1139,
+      "market_cap": 11790142,
+      "coingecko_id": "connect-token-wct"
+    },
+    {
+      "symbol": "HFTUSDT",
+      "name": "Hashflow",
+      "rank": 1144,
+      "market_cap": 11705594,
+      "coingecko_id": "hashflow"
+    },
+    {
+      "symbol": "RESOLVUSDT",
+      "name": "Resolv",
+      "rank": 1164,
+      "market_cap": 11356228,
+      "coingecko_id": "resolv"
+    },
+    {
+      "symbol": "VANRYUSDT",
+      "name": "Vanar Chain",
+      "rank": 1171,
+      "market_cap": 11190279,
+      "coingecko_id": "vanar-chain"
+    },
+    {
+      "symbol": "PARTIUSDT",
+      "name": "Particle Network",
+      "rank": 1178,
+      "market_cap": 11069157,
+      "coingecko_id": "particle-network"
+    },
+    {
+      "symbol": "HMSTRUSDT",
+      "name": "Hamster Kombat",
+      "rank": 1219,
+      "market_cap": 10317489,
+      "coingecko_id": "hamster-kombat"
+    },
+    {
+      "symbol": "PUFFERUSDT",
+      "name": "Puffer",
+      "rank": 1229,
+      "market_cap": 10094242,
+      "coingecko_id": "puffer-finance"
+    },
+    {
+      "symbol": "DYMUSDT",
+      "name": "Dymension",
+      "rank": 1234,
+      "market_cap": 9992100,
+      "coingecko_id": "dymension"
+    },
+    {
+      "symbol": "XIONUSDT",
+      "name": "XION",
+      "rank": 1244,
+      "market_cap": 9734734,
+      "coingecko_id": "xion-2"
+    },
+    {
+      "symbol": "PORTALUSDT",
+      "name": "Portal",
+      "rank": 1262,
+      "market_cap": 9449363,
+      "coingecko_id": "portal-2"
+    },
+    {
+      "symbol": "TAUSDT",
+      "name": "Trusta AI",
+      "rank": 1268,
+      "market_cap": 9202151,
+      "coingecko_id": "trusta-ai"
+    },
+    {
+      "symbol": "MAVIAUSDT",
+      "name": "Heroes of Mavia",
+      "rank": 1277,
+      "market_cap": 9062702,
+      "coingecko_id": "heroes-of-mavia"
+    },
+    {
+      "symbol": "FIGHTUSDT",
+      "name": "FIGHT",
+      "rank": 1284,
+      "market_cap": 8920291,
+      "coingecko_id": "fight-2"
+    },
+    {
+      "symbol": "SCRUSDT",
+      "name": "Scroll",
+      "rank": 1292,
+      "market_cap": 8828850,
+      "coingecko_id": "scroll"
+    },
+    {
+      "symbol": "BELUSDT",
+      "name": "Bella Protocol",
+      "rank": 1314,
+      "market_cap": 8533995,
+      "coingecko_id": "bella-protocol"
+    },
+    {
+      "symbol": "TOWNSUSDT",
+      "name": "Towns",
+      "rank": 1360,
+      "market_cap": 8018046,
+      "coingecko_id": "towns"
+    },
+    {
+      "symbol": "NOMUSDT",
+      "name": "Nomina",
+      "rank": 1427,
+      "market_cap": 7355149,
+      "coingecko_id": "nomina"
+    },
+    {
+      "symbol": "OLUSDT",
+      "name": "OPENLOOT",
+      "rank": 1458,
+      "market_cap": 7014742,
+      "coingecko_id": "open-loot"
+    },
+    {
+      "symbol": "SOLVUSDT",
+      "name": "Solv Protocol",
+      "rank": 1494,
+      "market_cap": 6596707,
+      "coingecko_id": "solv-protocol"
+    },
+    {
+      "symbol": "WHITEWHALEUSDT",
+      "name": "The White Whale",
+      "rank": 1511,
+      "market_cap": 6374462,
+      "coingecko_id": "the-white-whale"
+    },
+    {
+      "symbol": "MBOXUSDT",
+      "name": "Mobox",
+      "rank": 1520,
+      "market_cap": 6290186,
+      "coingecko_id": "mobox"
+    },
+    {
+      "symbol": "HAEDALUSDT",
+      "name": "Haedal Protocol",
+      "rank": 1556,
+      "market_cap": 5992403,
+      "coingecko_id": "haedal"
+    },
+    {
+      "symbol": "FHEUSDT",
+      "name": "Mind Network",
+      "rank": 1628,
+      "market_cap": 5413877,
+      "coingecko_id": "mind-network"
+    },
+    {
+      "symbol": "BMTUSDT",
+      "name": "Bubblemaps",
+      "rank": 1794,
+      "market_cap": 4194838,
+      "coingecko_id": "bubblemaps"
+    },
+    {
+      "symbol": "ROAMUSDT",
+      "name": "ROAM Token",
+      "rank": 1810,
+      "market_cap": 4078507,
+      "coingecko_id": "roam-token"
+    }
+  ],
+  "unmatched": [
+    {
+      "symbol": "HPOS10IUSDT",
+      "name": "Unknown",
+      "rank": 9999,
+      "market_cap": 0,
+      "coingecko_id": null
+    },
+    {
+      "symbol": "PUMPBTCUSDT",
+      "name": "Unknown",
+      "rank": 9999,
+      "market_cap": 0,
+      "coingecko_id": null
+    }
+  ],
+  "summary": {
+    "large_cap_count": 13,
+    "mid_cap_count": 41,
+    "small_cap_count": 247,
+    "unmatched_count": 2,
+    "total_classification": 301
+  }
+}

@@ -1,6 +1,4 @@
 # Generated data files
-collection_progress.json
-market_cap_classification.json
 data/
 *.csv
 *.db
