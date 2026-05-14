@@ -77,6 +77,13 @@ def get_coin_list():
 
     return coin_list
 
+
+TIER_LABELS = {
+    'large_cap': 'Large Cap',
+    'mid_cap': 'Mid Cap',
+    'small_cap': 'Small Cap',
+}
+
 def get_coin_metadata():
     """This function would focus on returning a dict consisting of metadata of 
     large_cap and mid_cap coins for now at this MVP level due to database 
@@ -85,11 +92,12 @@ def get_coin_metadata():
         data = json.load(f)
 
     coin_metadata = {}
-    for tier in ('large_cap', 'mid_cap', 'small_cap'):
-        for coin in data[tier]:
+    for tier_key in ('large_cap', 'mid_cap', 'small_cap'):
+        tier_label = TIER_LABELS[tier_key]
+        for coin in data[tier_key]:
             coin_metadata[coin['symbol']] = {
                 'name': coin['name'],
-                'tier': tier,
+                'tier': tier_label,
                 'rank': coin['rank'],
                 'market_cap': coin['market_cap'],
                 'coingecko_id': coin['coingecko_id'],
