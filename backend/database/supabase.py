@@ -5,7 +5,7 @@ import psycopg2
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
 
-from backend.db_config import SUPABASE_DATABASE_URL
+from backend.database.db_config import SUPABASE_DATABASE_URL
 from src.utils import log
 
 def get_supabase_connection():
