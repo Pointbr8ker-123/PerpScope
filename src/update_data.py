@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import ALL_COINS, SLEEP_BETWEEN_CALLS
 from collect_historical import fetch_funding_rates_page, fetch_klines_page
-from database import get_connection
+from backend.database.supabase import get_connection
 from utils import log, now_ms
 
 
@@ -132,7 +132,7 @@ def update_funding_rates(symbol):
             (symbol, timestamp_ms, timestamp, funding_rate)
         VALUES
             (%s, %s, %s, %s)
-        ON CONFLICT (symbol, timestamp_ms) DO NOTHING
+        ON CONFLICT (symbol, timestamp_ms, timestamp) DO NOTHING
     """
 
     with get_connection() as conn:
@@ -185,7 +185,7 @@ def update_prices(symbol, category):
             open_, high, low, close, volume)
         VALUES
             (%s, %s, %s, %s, %s, %s, %s, %s)
-        ON CONFLICT (symbol, timestamp_ms) DO NOTHING
+        ON CONFLICT (symbol, timestamp_ms, timestamp) DO NOTHING
     """
 
     with get_connection() as conn:
