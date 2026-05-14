@@ -1,5 +1,5 @@
 import pandas as pd
-from database import get_connection
+from backend.database.supabase import get_connection
 
 
 PERIODS_PER_YEAR = 1095
