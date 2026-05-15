@@ -11,10 +11,10 @@ from backend.database.timescale import get_connection
 from utils import log, now_ms
 
 
-# Due to supabase free tier restrictions (500mb), there has to be a 
+# Due to timescaledb free tier restrictions (750MB), there has to be a 
 # limit to how many days of data for each coin to keep in the database.
 # Older roww than the limit are deleted after each update runs thereby
-# preventing the supabase 500mb free tier from filling up.
+# preventing the timescaledb 750MB free tier from filling up.
 
 RETENTION_DAYS = 90
 
@@ -50,7 +50,7 @@ def cleanup_old_data():
     This function deletes rows older than the RETENTION_DAYS (i.e 90 days)
     from the three time-series tables
 
-    This keeps the database size from exceeding the supabase 500mb limit
+    This keeps the database size from exceeding the timescaledb 750MB limit
     """
     tables = ['funding_rates', 'perp_prices', 'spot_prices']
 
@@ -78,7 +78,7 @@ def cleanup_old_data():
 
 def get_database_size():
     """
-    This function returns the current size of the supabase database in MB.
+    This function returns the current size of the timescaledb database in MB.
     """
     sql = """
         SELECT 
@@ -269,13 +269,13 @@ def run_price_update(max_workers=10):
 
     log(f"\nPrice update complete in {duration}s")
     log(f"New row: {total_perp:,} perp | {total_spot:,} spot")
-    log(f"Database size: {db_size:.1f} MB / 500MB")
+    log(f"Database size: {db_size:.1f} MB / 750MB")
 
     if failed:
         log(f"Failed coins ({len(failed)}): {failed[:10]}")
 
     if db_size > 400:
-        log(f"WARNING: Database is {db_size:.0f}MB - approaching 500MB limit!")
+        log(f"WARNING: Database is {db_size:.0f}MB - approaching 750MB limit!")
         log(f"Consider reducing RETENTION_DAYS from {RETENTION_DAYS} to {RETENTION_DAYS/1.5}")
 
 
@@ -319,7 +319,7 @@ def run_funding_rates_update(max_workers=10):
 
     log(f"\nFunding update complete in {duration}s")
     log(f"New rows: {total_funding:,} funding rates")
-    log(f"Database size: {db_size:.1f}MB / 500MB")
+    log(f"Database size: {db_size:.1f}MB / 750MB")
 
     if failed:
         log(f"Failed coins ({len(failed)}): {failed[:10]}...")
