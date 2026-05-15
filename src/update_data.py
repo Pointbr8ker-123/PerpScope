@@ -182,7 +182,7 @@ def update_prices(symbol, category):
     sql = f"""
         INSERT INTO {table}
             (symbol, timestamp_ms, timestamp, 
-            open_, high, low, close, volume)
+            open, high, low, close, volume)
         VALUES
             (%s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT (symbol, timestamp_ms, timestamp) DO NOTHING
