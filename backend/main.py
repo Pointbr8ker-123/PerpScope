@@ -129,6 +129,41 @@ def get_coin_metadata(symbol):
     })
 
 
+@app.get("/")
+def root():
+    return {
+        "message": "PerpScope API is running",
+        "endpoints": {
+            "Dashboard": [
+                "GET  /api/opportunities?threshold=high&tier=all",
+                "GET  /api/coins",
+                "GET  /api/stats"
+            ],
+            "Coin Data": [
+                "GET  /api/coin/{symbol}",
+                "GET  /api/history/{symbol}?days=90",
+                "GET  /api/funding/{symbol}?days=90"
+            ],
+            "Research": [
+                "GET  /api/research/summary?days=90"
+            ],
+            "Automation": [
+                "POST /trigger/funding?key=YOUR_SECRET_KEY",
+                "POST /trigger/prices?key=YOUR_SECRET_KEY"
+            ],
+            "Health": [
+                "GET  /health"
+            ]
+        },
+        "threshold_tiers": {
+            "no_fee": 0.0,
+            "low": 0.532,
+            "medium": 1.143,
+            "high": 1.794
+        },
+    }
+
+
 @app.get("/api/coins")
 async def get_all_coins():
     """
