@@ -59,7 +59,7 @@ def cleanup_old_data():
         WHERE timestamp < NOW() - INTERVAL '{days} days'
     """
 
-    log(f"Running data cleanop...")
+    log(f"Running data cleanup...")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -278,16 +278,6 @@ def run_price_update(max_workers=10):
         log(f"WARNING: Database is {db_size:.0f}MB - approaching 500MB limit!")
         log(f"Consider reducing RETENTION_DAYS from {RETENTION_DAYS} to {RETENTION_DAYS/1.5}")
 
-    write_github_summary("Price Update Results", {
-        "Coins updated":  len(ALL_COINS) - len(failed),
-        "New perp rows":  f"{total_perp:,}",
-        "New spot rows":  f"{total_spot:,}",
-        "Failed coins":   len(failed),
-        "Database size":  f"{db_size:.1f}MB / 500MB",
-        "Duration":       f"{duration}s",
-        "Status":         "⚠️ WARNING" if db_size > 400 else "✅ OK"
-    })
-
 
 # --------------------------Pipeline 2: 8-hour Funding Rates Update ---------------------------------
 def run_funding_rates_update(max_workers=10):
@@ -333,33 +323,6 @@ def run_funding_rates_update(max_workers=10):
 
     if failed:
         log(f"Failed coins ({len(failed)}): {failed[:10]}...")
-
-    write_github_summary("Funding Rate Update Results", {
-        "Coins updated":      len(ALL_COINS) - len(failed),
-        "New funding rows":   f"{total_funding:,}",
-        "Failed coins":       len(failed),
-        "Database size":      f"{db_size:.1f}MB / 500MB",
-        "Duration":           f"{duration}s",
-        "Status":             "⚠️ WARNING" if db_size > 400 else "✅ OK"
-    })
-
-
-def write_github_summary(title, stats_dict):
-    """
-    Writes a formatted summary to the GitHub Actions job summary.
-    """
-    summary_file = os.getenv('GITHUB_STEP_SUMMARY')
-    
-    if not summary_file:
-        return 
-    
-    with open(summary_file, 'a') as f:
-        f.write(f"## {title}\n\n")
-        f.write("| Metric | Value |\n")
-        f.write("|--------|-------|\n")
-        for key, value in stats_dict.items():
-            f.write(f"| {key} | {value} |\n")
-        f.write("\n")
 
 
 if __name__ == "__main__":
