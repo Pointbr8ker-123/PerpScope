@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import ALL_COINS, SLEEP_BETWEEN_CALLS
 from collect_historical import fetch_funding_rates_page, fetch_klines_page
-from backend.database.supabase import get_connection
+from backend.database.timescale import get_connection
 from utils import log, now_ms
 
 
