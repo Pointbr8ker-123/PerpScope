@@ -1,8 +1,8 @@
 import os
 import sys
-import json
 import logging
 import numpy as np
+import uvicorn
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
@@ -614,3 +614,96 @@ async def get_market_stats():
             for tier, vals in rho_by_tier.items()
         }
     }
+
+
+# ------------------------------------------- AUTOMATION ENDPOINTS ------------------------------------
+def verify_cron_secret(key):
+    """
+    This function verifies that the automation request came from 
+    my cron job and raises HTTP 403 if the key is wrong or missing.
+    """
+    expected_key = os.getenv('CRON_SECRET')
+
+    if not expected_key:
+        raise HTTPException(
+            status_code=500,
+            detail="CRON_SECRET environment variable not configured"
+        )
+    
+    if key != expected_key:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid secret key"
+        )
+    
+
+@app.post("/trigger/funding")
+async def trigger_funding_update(
+    background_tasks: BackgroundTasks,
+    key=Query(..., description="Secret key for authorization")
+):
+    """
+    This function is triggered by cron-job every 8hrs
+    for funding rates update.
+    """
+    verify_cron_secret(key)
+    background_tasks.add_task(run_funding_rates_update)
+    logger.info("Funding rate update triggered by cron-job")
+
+    return {
+        "status":   "accepted",
+        "message":  "Funding rate update started in background",
+        "pipeline": "funding"
+    }
+
+
+@app.post("/trigger/prices")
+async def trigger_price_update(
+    background_tasks: BackgroundTasks,
+    key=Query(..., description="Secret key for authorization")
+):
+    """
+    This function is triggered by cron-job every hour
+    to update perp and spot prices.
+    """
+    verify_cron_secret(key)
+    background_tasks.add_task(run_price_update)
+    logger.info("Perp and spot prices updates triggered by cron-job")
+
+    return {
+        "status":   "accepted",
+        "message":  "Perp and spot prices updates started in background",
+        "pipeline": "prices"
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """
+    This function is called by cron-job every 10 mins to keep Render warm.
+    """
+    db_status = "unknown"
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1")
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+
+    return {
+        "status":       "ok",
+        "database":     db_status,
+        "coins_loaded": len(MARKET_CAP_LOOKUP),
+        "timestamp":    datetime.now(timezone.utc).isoformat()
+    }
+
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )
