@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import logging
+import numpy as np
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
@@ -254,7 +255,11 @@ async def get_opportunities(
 
 @app.get("/api/coin/{symbol}")
 async def get_coin_detail(symbol):
-    """This function returns the current details for a specific coin"""
+    """
+    This function returns the current details for a specific coin.
+
+    This will be used by the CoinDetail page to show coin details.
+    """
     symbol = symbol.upper()
 
     sql = """
@@ -319,4 +324,293 @@ async def get_coin_detail(symbol):
             tier: get_signal(rho, tier) for tier in THRESHOLDS.keys()
         },
         "last_updated":    row['last_updated'].isoformat()
+    }
+
+
+@app.get("/api/history/{symbol}")
+async def get_coin_history(
+    symbol,
+    days=Query(90, ge=1, le=365, description="Days of history to return")
+):
+    """
+    This function returns the hourly rho history for one coin over the past
+    N days.
+
+    This will be used by the line chart on the CoinDetail page.
+    """
+    symbol = symbol.upper()
+
+    sql = """
+        SELECT 
+            p.symbol,
+            p.close AS perp_price,
+            s.close AS spot_price
+        FROM perp_prices p
+        JOIN spot_prices s
+            ON p.symbol = s.symbol
+            AND p.timestamp_ms = s.timestamp_ms
+        WHERE p.symbol = %s
+            AND p.timestamp >= NOW() - INTERVAL 'I day' * %s
+            AND p.close > 0
+            AND s.close > 0
+        ORDER BY p.timestamp_ms ASC
+    """
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (symbol, days))
+                rows = cur.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+    if not rows:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"No historical data for {symbol}"
+        )
+    
+    history = []
+    for row in rows:
+        rho = calculate_rho(float(row['perp_price']), float(row['spot_price']))
+        history.append({
+            "timestamp":    row['timestamp'].isoformat(),
+            "perp_price":   round(row['perp_price'], 8),
+            "spot_price":   round(row['spot_price'], 8),
+            "rho":          round(rho, 4),
+            "signal":       get_signal(rho)
+        })
+
+    rho_values     = [h['rho'] for h in history]
+    abs_rho_values = [abs(r) for r in rho_values]
+
+    return {
+        "symbol":       symbol,
+        "days":         days,
+        "data_points":  len(history),
+        "summary": {
+            "mean_rho":         round(sum(rho_values)/len(rho_values), 4),
+            "mean_abs_rho":     round(sum(abs_rho_values)/len(abs_rho_values), 4),
+            "max_rho":          round(max(rho_values), 4),
+            "min_rho":          round(min(rho_values), 4),
+            "pct_opportuinity": round(
+                sum(1 for r in rho_values if abs(r) > THRESHOLDS['high']) 
+                / len(rho_values) * 100, 1
+            )
+        },
+        "data":         history
+    }
+
+
+@app.get("/api/funding/{symbol}")
+async def get_funding_history(
+    symbol,
+    days=Query(90, ge=1, le=365)
+):
+    """
+    This function returns the raw funding rate history for one coin.
+    """
+    symbol = symbol.upper()
+
+    sql = """
+        SELECT
+            timestamp,
+            funding_rate
+        FROM funding_rates
+        WHERE symbol = %s
+            AND timestamp >= NOW() - INTERVAL '1 day' * %s
+        ORDER BY timestamp_ms ASC
+    """
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (symbol, days))
+                rows = cur.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+    if not rows:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No funding rate history for {symbol}"
+        )
+    
+    data = []
+    for row in rows:
+        rate_8hr    = float(row['funding_rate'])
+        annualized  = annualize_funding_rate(rate_8hr)
+        data.append({
+            "timestamp":       row['timestamp'].isoformat(),
+            "rate_8hr":        round(rate_8hr * 100, 6),
+            "rate_annualized": round(annualized, 2),
+            "signal":          get_funding_signal(annualized)
+        })
+
+    rates_ann = [d['rate_annualized'] for d in data]
+
+    return {
+        "symbol":      symbol,
+        "days":        days,
+        "data_points": len(data),
+        "summary": {
+            "mean_annualized":  round(sum(rates_ann)/len(rates_ann), 2),
+            "max_annualized":   round(max(rates_ann), 2),
+            "min_annualized":   round(min(rates_ann), 2),
+        },
+        "data":        data
+    }
+
+
+@app.get("/api/research/summary")
+async def get_research_summary(days=Query(90, ge=7, le=365)):
+    """
+    This function returns aggregate rho statistics grouped by market cap tier.
+    """
+    sql = """
+        SELECT
+            p.symbol,
+            AVG(ABS(
+                (p.close - s.close) / NULLIF(p.close, 0)
+            )) AS mean_premium
+            COUNT (*) AS n_observations
+        FROM perp_prices p
+        JOIN spot_prices s
+            ON p.symbol = s.symbol
+            AND p.timestamp_ms = s.timestamp_ms
+        WHERE p.timestamp >= NOW() - INTERVAL '1 day' * %s
+            AND p.close > 0
+            AND s.close > 0
+        GROUP BY p.symbol
+        HAVING COUNT(*) >= 24
+        ORDER BY p.symbol
+    """
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (days,))
+                rows = cur.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+    results = []
+    for row in rows:
+        symbol       = row['symbol']
+        mean_premium = float(row['mean_premium'] or 0)
+        metadata     = get_coin_metadata(symbol)
+
+        if metadata['tier'] == 'Unknown':
+            continue
+
+        sign_val = float(np.sign(IOTA - RISK_FREE_RATE_8HR))
+        mean_rho = (KAPPA * mean_premium + sign_val * GAMMA - RISK_FREE_RATE_8HR) * PERIODS_PER_YEAR
+
+        results.append({
+            "symbol":          symbol,
+            "display_symbol":  symbol.replace('USDT', ''),
+            "name":            metadata['name'],
+            "tier":            metadata['tier'],
+            "market_cap_rank": metadata['rank'],
+            "mean_abs_rho":    round(abs(mean_rho), 4),
+            "n_observations":  int(row['n_observations'])
+        })
+
+    results.sort(key=lambda x: x['market_cap_rank'])
+
+    tier_groups = {}
+    for r in results:
+        tier = r['tier']
+        if tier not in tier_groups:
+            tier_groups[tier] = []
+        tier_groups[tier].append(r['mean_abs_rho'])
+
+    tier_summary = {}
+    for tier, values in tier_groups.items():
+        tier_summary[tier] = {
+            "mean_abs_rho": round(sum(values)/len(values), 4),
+            "coin_count":   len(values),
+            "max_abs_rho":  round(max(values), 4),
+            "min_abs_rho":  round(min(values), 4),
+        }
+
+    return {
+        "days_analyzed": days,
+        "total_coins":   len(results),
+        "tier_summary":  tier_summary,
+        "coin_data":     results
+    }
+
+
+@app.get("/api/stats")
+async def get_market_stats():
+    """
+    This function returns the overall market statistics for the dashboard stats bar.
+    """
+    sql = """
+        WITH latest_perp AS (
+            SELECT DISTINCT ON (symbol)
+                symbol, close AS perp_price
+            FROM perp_prices
+            ORDER BY symbol, timestamp_ms DESC
+        ),
+        latest_spot AS (
+            SELECT DISTINCT ON (symbol)
+                symbol, close AS spot_price
+            FROM spot_prices
+            ORDER BY symbol, timestamp_ms DESC
+        )
+        SELECT p.symbol, p.perp_price, s.spot_price
+        FROM latest_perp  p
+        JOIN latest_spot  s ON p.symbol = s.symbol
+    """
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+                rows = cur.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    if not rows:
+        return {
+            "total_coins":       0,
+            "opportunities":     0,
+            "mean_rho":          0,
+            "small_large_ratio": 0
+        }
+
+    rho_by_tier = {"Large Cap": [], "Mid Cap": [], "Small Cap": []}
+    all_rho     = []
+    opp_count   = 0
+
+    for row in rows:
+        symbol = row['symbol']
+        rho    = calculate_rho(float(row['perp_price']), float(row['spot_price']))
+        meta   = get_coin_metadata(symbol)
+        tier   = meta['tier']
+
+        all_rho.append(rho)
+
+        if abs(rho) > THRESHOLDS['high']:
+            opp_count += 1
+
+        if tier in rho_by_tier:
+            rho_by_tier[tier].append(rho)
+
+    mean_rho   = sum(all_rho) / len(all_rho) if all_rho else 0
+    small_mean = sum(rho_by_tier['Small Cap']) / len(rho_by_tier['Small Cap']) if rho_by_tier['Small Cap'] else 0
+    large_mean = sum(rho_by_tier['Large Cap']) / len(rho_by_tier['Large Cap']) if rho_by_tier['Large Cap'] else 0
+    ratio      = round(small_mean / large_mean, 2) if large_mean else 0
+
+    return {
+        "total_coins":       len(rows),
+        "opportunities":     opp_count,
+        "mean_rho":          round(mean_rho, 4),
+        "small_large_ratio": ratio,
+        "tier_counts": {
+            tier: len(vals)
+            for tier, vals in rho_by_tier.items()
+        }
     }
