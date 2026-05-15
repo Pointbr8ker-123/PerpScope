@@ -27,7 +27,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import MARKET_CAP_LOOKUP
-from backend.database.supabase import get_connection
+from backend.database.timescale import get_connection
 
 
 # ----------------Bybit Funding rate parameters-------------------------
