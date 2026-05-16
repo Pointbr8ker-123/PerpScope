@@ -225,7 +225,7 @@ async def get_opportunities(
         SELECT
             p.symbol,
             s.spot_price,
-            p.perp_price
+            p.perp_price,
             p.last_updated
         FROM latest_perp p
         JOIN latest_spot s ON p.symbol = s.symbol
