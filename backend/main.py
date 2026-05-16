@@ -44,6 +44,13 @@ logger = logging.getLogger(__name__)
 
 
 # -------------------------------- MARKET CAP DATA --------------------------------------
+TIER_MAP_DB_TO_UI = {
+    'large_cap': 'LARGE',
+    'mid_cap': 'MID', 
+    'small_cap': 'SMALL',
+    'Unknown': 'SMALL'
+}
+
 def load_market_cap_data():
     """
     This function loads market cap classification from the database
@@ -64,8 +71,11 @@ def load_market_cap_data():
         ALL_COINS.clear()
 
         for row in rows:
+            db_tier = row['market_cap_tier'] or 'Unknown'
+            ui_tier = TIER_MAP_DB_TO_UI(db_tier, 'SMALL')
+
             MARKET_CAP_LOOKUP[row['symbol']] = {
-                'tier': row['market_cap_tier'] or 'Unknown',
+                'tier': ui_tier,
                 'rank': row['market_cap_rank'] or 9999,
                 'name': row['name'] or row['symbol']
             }
@@ -123,7 +133,7 @@ def get_coin_metadata(symbol):
     This function returns market cap metadata for one coin.
     """
     return MARKET_CAP_LOOKUP.get(symbol, {
-        'tier': 'Unknown',
+        'tier': 'SMALL',
         'rank': 9999,
         'name': symbol.replace('USDT', '')
     })
@@ -190,7 +200,7 @@ async def get_all_coins():
 @app.get("/api/opportunities")
 async def get_opportunities(
     threshold=Query("high", description="Trading cost tier: no_fee|low|medium|high"),
-    tier=Query('all', description="Market cap filter: all|Large Cap|Mid Cap|Small Cap")):
+    tier=Query('all', description="Market cap filter: all|LARGE|MID|SMALL")):
     """
     This is the main endpoint. Powers the opportunity ranker table on the dashboard
 
@@ -264,11 +274,11 @@ async def get_opportunities(
             "display_symbol":   symbol.replace('USDT', ''),
             "name":             metadata['name'],
             "tier":             metadata['tier'],
-            "market_cap_rank":  metadata['rank'],
+            "mc_rank":          metadata['rank'],
             "perp_price":       round(perp_price, 8),
             "spot_price":       round(spot_price, 8),
-            "premium_pct":      round((perp_price - spot_price) / spot_price * 100, 4),
-            "rho":              round(rho, 4),
+            "premium":          round((perp_price - spot_price) / spot_price * 100, 4),
+            "rho_annual":       round(rho, 4),
             "abs_rho":          round(abs(rho), 4),
             "signal":           signal,
             "is_opportunity":   signal != 'NEUTRAL',
@@ -349,11 +359,11 @@ async def get_coin_detail(symbol):
         "display_symbol":  symbol.replace('USDT', ''),
         "name":            metadata['name'],
         "tier":            metadata['tier'],
-        "market_cap_rank": metadata['rank'],
+        "mc_rank":         metadata['rank'],
         "perp_price":      round(perp_price, 8),
         "spot_price":      round(spot_price, 8),
-        "premium_pct":     round((perp_price - spot_price)/spot_price * 100, 4),
-        "rho":             round(rho, 4),
+        "premium":         round((perp_price - spot_price)/spot_price * 100, 4),
+        "rho_annual":      round(rho, 4),
         "signal":          get_signal(rho),
         "signal_by_tier":  {
             tier: get_signal(rho, tier) for tier in THRESHOLDS.keys()
@@ -409,7 +419,7 @@ async def get_coin_history(
     for row in rows:
         rho = calculate_rho(float(row['perp_price']), float(row['spot_price']))
         history.append({
-            "timestamp":    row['timestamp'].isoformat(),
+            "date":         row['timestamp'].strftime('%Y-%m-%d'),
             "perp_price":   round(row['perp_price'], 8),
             "spot_price":   round(row['spot_price'], 8),
             "rho":          round(rho, 4),
@@ -476,9 +486,9 @@ async def get_funding_history(
         rate_8hr    = float(row['funding_rate'])
         annualized  = annualize_funding_rate(rate_8hr)
         data.append({
-            "timestamp":       row['timestamp'].isoformat(),
-            "rate_8hr":        round(rate_8hr * 100, 6),
-            "rate_annualized": round(annualized, 2),
+            "date":       row['timestamp'].strftime('%Y-%m-%d'),
+            "funding":    round(rate_8hr, 6),
+            "annualized": round(annualized, 2),
             "signal":          get_funding_signal(annualized)
         })
 
@@ -535,23 +545,18 @@ async def get_research_summary(days=Query(90, ge=7, le=365)):
         mean_premium = float(row['mean_premium'] or 0)
         metadata     = get_coin_metadata(symbol)
 
-        if metadata['tier'] == 'Unknown':
-            continue
-
         sign_val = float(np.sign(IOTA - RISK_FREE_RATE_8HR))
         mean_rho = (KAPPA * mean_premium + sign_val * GAMMA - RISK_FREE_RATE_8HR) * PERIODS_PER_YEAR
 
         results.append({
-            "symbol":          symbol,
-            "display_symbol":  symbol.replace('USDT', ''),
+            "symbol":          symbol.replace('USDT', ''),
             "name":            metadata['name'],
             "tier":            metadata['tier'],
-            "market_cap_rank": metadata['rank'],
+            "rank":            metadata['rank'],
             "mean_abs_rho":    round(abs(mean_rho), 4),
-            "n_observations":  int(row['n_observations'])
         })
 
-    results.sort(key=lambda x: x['market_cap_rank'])
+    results.sort(key=lambda x: x['rank'])
 
     tier_groups = {}
     for r in results:
@@ -560,20 +565,32 @@ async def get_research_summary(days=Query(90, ge=7, le=365)):
             tier_groups[tier] = []
         tier_groups[tier].append(r['mean_abs_rho'])
 
-    tier_summary = {}
+    tiers_array = []
+    small_rhos = []
+    large_rhos = []
+    
     for tier, values in tier_groups.items():
-        tier_summary[tier] = {
-            "mean_abs_rho": round(sum(values)/len(values), 4),
-            "coin_count":   len(values),
-            "max_abs_rho":  round(max(values), 4),
-            "min_abs_rho":  round(min(values), 4),
-        }
+        mean_val = round(np.mean(values), 4)
+        tiers_array.append({
+            "tier": tier,
+            "count": len(values),
+            "mean_abs_rho": mean_val,
+            "max_abs_rho": round(max(values), 4)
+        })
+        
+        if tier == "SMALL":
+            small_rhos = values
+        elif tier == "LARGE":
+            large_rhos = values
+    
+    ratio_small_large = 1.0
+    if large_rhos and small_rhos:
+        ratio_small_large = round(np.mean(small_rhos) / np.mean(large_rhos), 4)
 
     return {
-        "days_analyzed": days,
-        "total_coins":   len(results),
-        "tier_summary":  tier_summary,
-        "coin_data":     results
+        "ratio_small_large": ratio_small_large,
+        "tiers": tiers_array,
+        "scatter": results    
     }
 
 
@@ -616,7 +633,7 @@ async def get_market_stats():
             "small_large_ratio": 0
         }
 
-    rho_by_tier = {"Large Cap": [], "Mid Cap": [], "Small Cap": []}
+    rho_by_tier = {"LARGE": [], "MID": [], "SMALL": []}
     all_rho     = []
     opp_count   = 0
 
@@ -635,15 +652,15 @@ async def get_market_stats():
             rho_by_tier[tier].append(rho)
 
     mean_rho   = sum(all_rho) / len(all_rho) if all_rho else 0
-    small_mean = sum(rho_by_tier['Small Cap']) / len(rho_by_tier['Small Cap']) if rho_by_tier['Small Cap'] else 0
-    large_mean = sum(rho_by_tier['Large Cap']) / len(rho_by_tier['Large Cap']) if rho_by_tier['Large Cap'] else 0
+    small_mean = sum(rho_by_tier['SMALL']) / len(rho_by_tier['SMALL']) if rho_by_tier['SMALL'] else 0
+    large_mean = sum(rho_by_tier['LARGE']) / len(rho_by_tier['LARGE']) if rho_by_tier['LARGE'] else 0
     ratio      = round(small_mean / large_mean, 2) if large_mean else 0
 
     return {
-        "total_coins":       len(rows),
-        "opportunities":     opp_count,
-        "mean_rho":          round(mean_rho, 4),
-        "small_large_ratio": ratio,
+        "coins_monitored":       len(rows),
+        "active_opportunities":  opp_count,
+        "mean_rho":              round(mean_rho, 4),
+        "small_large_ratio":     ratio,
         "tier_counts": {
             tier: len(vals)
             for tier, vals in rho_by_tier.items()
