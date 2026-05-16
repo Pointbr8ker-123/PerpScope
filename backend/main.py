@@ -72,7 +72,7 @@ def load_market_cap_data():
 
         for row in rows:
             db_tier = row['market_cap_tier'] or 'Unknown'
-            ui_tier = TIER_MAP_DB_TO_UI(db_tier, 'SMALL')
+            ui_tier = TIER_MAP_DB_TO_UI.get(db_tier, 'SMALL')
 
             MARKET_CAP_LOOKUP[row['symbol']] = {
                 'tier': ui_tier,
@@ -171,6 +171,15 @@ def root():
             "medium": 1.143,
             "high": 1.794
         },
+    }
+
+
+@app.get("/debug/lookup")
+async def debug_lookup():
+    return {
+        "lookup_size": len(MARKET_CAP_LOOKUP),
+        "sample": dict(list(MARKET_CAP_LOOKUP.items())[:3]),
+        "all_symbols_count": len(ALL_COINS)
     }
 
 
@@ -289,13 +298,15 @@ async def get_opportunities(
         # then by abs_rho descending within each group
         results.sort(key=lambda x: (not x['is_opportunity'], -x['abs_rho']))
 
-        return {
-            "threshold_tier":    threshold,
-            "threhold_value":    THRESHOLDS[threshold],
-            "total_coins":       len(results),
-            "opportunity_count": sum(1 for r in results if r['is_opportunity']),
-            "data":              results
-        }
+        # return {
+        #     "threshold_tier":    threshold,
+        #     "threhold_value":    THRESHOLDS[threshold],
+        #     "total_coins":       len(results),
+        #     "opportunity_count": sum(1 for r in results if r['is_opportunity']),
+        #     "data":              results
+        # }
+
+    return results
 
 
 @app.get("/api/coin/{symbol}")
@@ -349,6 +360,46 @@ async def get_coin_detail(symbol):
             detail=f"No data found for {symbol}. "
         )
     
+    history_sql = """
+        SELECT
+            p.close AS perp_price,
+            s.close AS spot_price
+        FROM perp_prices p
+        JOIN spot_prices s
+            ON  p.symbol       = s.symbol
+            AND p.timestamp_ms = s.timestamp_ms
+        WHERE p.symbol    = %s
+          AND p.timestamp >= NOW() - INTERVAL '90 days'
+          AND p.close > 0
+          AND s.close > 0
+    """
+
+    mean_abs_rho_90d     = 0.0
+    pct_time_opportunity = 0.0
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(history_sql, (symbol,))
+                hist_rows = cur.fetchall()
+
+        if hist_rows:
+            rho_values = [
+                calculate_rho(float(r['perp_price']), float(r['spot_price']))
+                for r in hist_rows
+            ]
+
+            rho_values = [r for r in rho_values if r == r] # Filtering out NaN values
+
+            if rho_values:
+                mean_abs_rho_90d = sum(abs(r) for r in rho_values) / len(rho_values)
+                above_threshold  = sum(1 for r in rho_values if abs(r) > THRESHOLDS['high'])
+                pct_time_opportunity = above_threshold / len(rho_values)
+
+    except Exception as e:
+        logger.warning(f"Could not calculate 90d stats for {symbol}: {e}")
+    
+
     perp_price = float(row['perp_price'])
     spot_price = float(row['spot_price'])
     rho        = calculate_rho(perp_price, spot_price)
@@ -365,24 +416,24 @@ async def get_coin_detail(symbol):
         "premium":         round((perp_price - spot_price)/spot_price * 100, 4),
         "rho_annual":      round(rho, 4),
         "signal":          get_signal(rho),
-        "signal_by_tier":  {
-            tier: get_signal(rho, tier) for tier in THRESHOLDS.keys()
-        },
-        "last_updated":    row['last_updated'].isoformat()
+        # "signal_by_tier":  {
+        #     tier: get_signal(rho, tier) for tier in THRESHOLDS.keys()
+        # },
+        "mean_abs_rho_90d": round(mean_abs_rho_90d, 4),
+        "pct_time_opportunity": round(pct_time_opportunity, 4)
+        # "last_updated":    row['last_updated'].isoformat()
     }
 
 
 @app.get("/api/history/{symbol}")
-async def get_coin_history(
-    symbol,
-    days=Query(90, ge=1, le=365, description="Days of history to return")
-):
+async def get_coin_history(symbol, days=Query(default=90)):
     """
     This function returns the hourly rho history for one coin over the past
     N days.
 
     This will be used by the line chart on the CoinDetail page.
     """
+    days = max(1, min(int(days), 365))
     symbol = symbol.upper()
 
     sql = """
