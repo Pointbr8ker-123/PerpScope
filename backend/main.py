@@ -218,7 +218,7 @@ async def get_opportunities(
             SELECT DISTINCT ON (symbol)
                 symbol,
                 close       AS spot_price,
-                timestamp   AS last_updates
+                timestamp   AS last_updated
             FROM spot_prices
             ORDER BY symbol, timestamp_ms DESC
         )
