@@ -79,9 +79,9 @@ def get_coin_list():
 
 
 TIER_LABELS = {
-    'large_cap': 'Large Cap',
-    'mid_cap': 'Mid Cap',
-    'small_cap': 'Small Cap',
+    'large_cap': 'LARGE',
+    'mid_cap':   'MID',
+    'small_cap': 'SMALL',
 }
 
 def get_coin_metadata():
