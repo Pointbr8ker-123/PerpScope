@@ -719,6 +719,36 @@ async def get_market_stats():
     }
 
 
+@app.get("/debug/prices/{symbol}")
+async def debug_prices(symol):
+    symbol = symbol.upper()
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT close, timestamp, timestamp_ms
+                FROM perp_prices
+                WHERE symbol = %s
+                ORDER BY timestamp DESC
+                LIMIT 5
+            """, (symbol,))
+            p_rows = cur.fetchall()
+
+            cur.execute("""
+                SELECT close, timestamp, timestamp_ms
+                FROM spot_prices
+                WHERE symbol = %s
+                ORDER BY timestamp_ms
+                LIMIT 5
+            """, (symbol,))
+            s_rows = cur.fetchall()
+
+    return {
+        "symbol": symbol,
+        "latest_perp": [dict(r) for r in p_rows],
+        "latest_spot": [dict(r) for r in s_rows]
+    }
+
+
 # ------------------------------------------- AUTOMATION ENDPOINTS ------------------------------------
 def verify_cron_secret(key):
     """
