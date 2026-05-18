@@ -720,7 +720,7 @@ async def get_market_stats():
 
 
 @app.get("/debug/prices/{symbol}")
-async def debug_prices(sybmol):
+async def debug_prices(symbol):
     symbol = symbol.upper()
     with get_connection() as conn:
         with conn.cursor() as cur:
