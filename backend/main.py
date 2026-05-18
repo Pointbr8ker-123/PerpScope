@@ -737,7 +737,7 @@ async def debug_prices(symbol):
                 SELECT close, timestamp, timestamp_ms
                 FROM spot_prices
                 WHERE symbol = %s
-                ORDER BY timestamp_ms
+                ORDER BY timestamp_ms DESC
                 LIMIT 5
             """, (symbol,))
             s_rows = cur.fetchall()
