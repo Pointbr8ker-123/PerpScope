@@ -231,6 +231,7 @@ async def get_opportunities(
                 close       AS perp_price,
                 timestamp   AS last_updated
             FROM perp_prices
+            WHERE timestamp >= NOW() - INTERVAL '4 hours'
             ORDER BY symbol, timestamp_ms DESC
         ),
         latest_spot AS (
@@ -239,6 +240,7 @@ async def get_opportunities(
                 close       AS spot_price,
                 timestamp   AS last_updated
             FROM spot_prices
+            WHERE timestamp >= NOW() - INTERVAL '4 hours'
             ORDER BY symbol, timestamp_ms DESC
         )
         SELECT
