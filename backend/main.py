@@ -223,6 +223,28 @@ async def get_opportunities(
             detail=f"Invalid threshold '{threshold}'. Choose from {list(THRESHOLDS.keys())}"
         )
     
+    # Fetch latest funding rates for each coin
+    funding_lookup = {}
+
+    try:
+        funding_sql = """
+            SELECT DISTINCT ON (symbol)
+                symbol,
+                funding_rate
+            FROM funding_rates
+            ORDER BY symbol, timestamp_ms DESC
+        """
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(funding_sql)
+                funding_rows = cur.fetchall()
+
+        for row in funding_rows:
+            funding_lookup[row['symbol']] = float(row['funding_rate'])
+
+    except Exception as e:
+        logger.warning(f"Could not fetch funding rates: {str(e)}")
+
     # Fetch latest perp + spot price for every coin
     sql = """
         WITH latest_perp AS (
@@ -277,8 +299,9 @@ async def get_opportunities(
         if tier != "all" and metadata['tier'] != tier:
             continue
 
-        rho = calculate_rho(perp_price, spot_price)
-        signal = get_signal(rho, threshold)
+        rho          = calculate_rho(perp_price, spot_price)
+        signal       = get_signal(rho, threshold)
+        funding_rate = funding_lookup.get(symbol, 0.0)
 
         results.append({
             "symbol":           symbol,
@@ -293,7 +316,8 @@ async def get_opportunities(
             "abs_rho":          round(abs(rho), 4),
             "signal":           signal,
             "is_opportunity":   signal != 'NEUTRAL',
-            "last_updated":     row['last_updated'].isoformat()
+            "last_updated":     row['last_updated'].isoformat(),
+            "funding_rate":     round(funding_rate, 6),
         })
 
         # Sorting by opportunities first (using the 'not' to make True values come first),
