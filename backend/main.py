@@ -288,7 +288,7 @@ async def get_opportunities(
             "mc_rank":          metadata['rank'],
             "perp_price":       round(perp_price, 8),
             "spot_price":       round(spot_price, 8),
-            "premium":          round((perp_price - spot_price) / spot_price, 4),
+            "premium":          round((perp_price - spot_price) / spot_price * 100, 4),
             "rho_annual":       round(rho, 4),
             "abs_rho":          round(abs(rho), 4),
             "signal":           signal,
@@ -415,7 +415,7 @@ async def get_coin_detail(symbol):
         "mc_rank":         metadata['rank'],
         "perp_price":      round(perp_price, 8),
         "spot_price":      round(spot_price, 8),
-        "premium":         round((perp_price - spot_price)/spot_price, 4),
+        "premium":         round((perp_price - spot_price)/spot_price * 100, 4),
         "rho_annual":      round(rho, 4),
         "signal":          get_signal(rho),
         # "signal_by_tier":  {
