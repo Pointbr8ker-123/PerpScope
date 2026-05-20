@@ -585,16 +585,18 @@ async def get_funding_history(
 
 
 @app.get("/api/research/summary")
-async def get_research_summary(days=Query(90, ge=7, le=365)):
+async def get_research_summary(days=Query(default=90)):
     """
     This function returns aggregate rho statistics grouped by market cap tier.
     """
+    days = max(7, min(int(days), 365))
+
     sql = """
         SELECT
             p.symbol,
             AVG(ABS(
                 (p.close - s.close) / NULLIF(p.close, 0)
-            )) AS mean_premium
+            )) AS mean_premium,
             COUNT (*) AS n_observations
         FROM perp_prices p
         JOIN spot_prices s
@@ -622,14 +624,17 @@ async def get_research_summary(days=Query(90, ge=7, le=365)):
         mean_premium = float(row['mean_premium'] or 0)
         metadata     = get_coin_metadata(symbol)
 
+        tier = metadata['tier'] if metadata['tier'] != 'Unknown' else 'SMALL'
+        rank = metadata['rank']
+
         sign_val = float(np.sign(IOTA - RISK_FREE_RATE_8HR))
         mean_rho = (KAPPA * mean_premium + sign_val * GAMMA - RISK_FREE_RATE_8HR) * PERIODS_PER_YEAR
 
         results.append({
             "symbol":          symbol.replace('USDT', ''),
             "name":            metadata['name'],
-            "tier":            metadata['tier'],
-            "rank":            metadata['rank'],
+            "tier":            tier,
+            "rank":            rank,
             "mean_abs_rho":    round(abs(mean_rho), 4),
         })
 
