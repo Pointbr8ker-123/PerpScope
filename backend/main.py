@@ -604,7 +604,7 @@ async def get_research_summary(days=Query(90, ge=7, le=365)):
             AND p.close > 0
             AND s.close > 0
         GROUP BY p.symbol
-        HAVING COUNT(*) >= 24
+        HAVING COUNT(*) >= 5
         ORDER BY p.symbol
     """
 
