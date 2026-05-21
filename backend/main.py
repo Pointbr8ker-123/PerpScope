@@ -1,11 +1,13 @@
+import httpx
 import os
 import sys
 import logging
 import numpy as np
 import uvicorn
 from datetime import datetime, timezone
-
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
+from jose import jwt, JWTError, jwk
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -18,12 +20,7 @@ SRC_DIR = os.path.join(PROJECT_ROOT, 'src')
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, SRC_DIR)
 
-from config import (
-    ALL_COINS, 
-    BASE_URL, 
-    MARKET_CAP_LOOKUP, 
-    REQUEST_TIMEOUT
-)
+from config import ALL_COINS, MARKET_CAP_LOOKUP
 from calculate_rho import (
     calculate_rho,
     get_signal,
@@ -32,6 +29,7 @@ from calculate_rho import (
 )
 from calculate_funding import annualize_funding_rate, get_funding_signal
 from update_data import run_price_update, run_funding_rates_update
+from database.db_config import SUPABASE_URL, SUPABASE_JWKS_URL
 
 
 # -------------------------------- LOGGING ---------------------------------------------
@@ -861,6 +859,108 @@ async def health_check():
         "database":     db_status,
         "coins_loaded": len(MARKET_CAP_LOOKUP),
         "timestamp":    datetime.now(timezone.utc).isoformat()
+    }
+
+
+# --------------------------- USER MANAGEMENT ------------------------------
+security = HTTPBearer()
+
+_jwks_cache = None
+
+async def get_jwks():
+    """
+    This function fetches JWKS from supabase endpoint without caching.
+    """
+    global _jwks_cache
+    if _jwks_cache is None:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(SUPABASE_JWKS_URL)
+            response.raise_for_status()
+            _jwks_cache = response.json()
+
+    return _jwks_cache
+
+
+def get_signing_key(kid: str, jwks_data: dict):
+    """
+    This function extracts the public key for the given key ID
+    """
+    for key in jwks_data.get("keys", []):
+        if key.get("kid") == kid:
+            return jwk.construct(key).to_pem()
+    raise ValueError(f"Key with kid {kid} not found")
+
+
+async def get_current_user(
+        credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    This function verifies the Supabase JWT usin JWKS
+    """
+    token = credentials.credentials
+
+    try:
+        unverified_header = jwt.get_unverified_header(token)
+        kid = unverified_header.get("kid")
+        if not kid:
+            raise HTTPException(status_code=401, detail="Invalid token: missing kid")
+        
+        jwks_data = await get_jwks()
+        signing_key = get_signing_key(kid, jwks_data)
+
+        payload = jwt.decode(
+            token,
+            signing_key,
+            algorithms=["ES256"],
+            options={"verify_aud": False}
+        )
+        return payload
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+
+
+async def get_current_user_db_id(user=Depends(get_current_user)):
+    """
+    This function gets the internal database ID from the users table
+    for the currently authenticated user.
+    """
+    supabase_uid = user.get("sub")
+
+    sql = """
+        SELECT
+            id, 
+            email,
+            plan,
+            telegram_chat_id
+        FROM users
+        WHERE supabase_user_id = %s
+            AND is_active = true
+    """
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (supabase_uid,))
+            row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found in database"
+        )
+    
+    return dict(row)
+
+
+@app.get("/api/user/profile")
+async def get_profile(user=Depends(get_current_user_db_id)):
+    """
+    This function returns the current user's profile.
+    """
+    return {
+        "id":                 user['id'],
+        "email":              user['email'],
+        "plan":               user['plan'],
+        "telegram_connected": user['telegram_chat_id'] is not None,
     }
 
 
