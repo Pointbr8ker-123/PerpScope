@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from database.timescale import get_connection
+from database.supabase import get_supabase_connection
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
@@ -937,7 +938,7 @@ async def get_current_user_db_id(user=Depends(get_current_user)):
             AND is_active = true
     """
 
-    with get_connection() as conn:
+    with get_supabase_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (supabase_uid,))
             row = cur.fetchone()
@@ -962,6 +963,126 @@ async def get_profile(user=Depends(get_current_user_db_id)):
         "plan":               user['plan'],
         "telegram_connected": user['telegram_chat_id'] is not None,
     }
+
+
+@app.post("/api/user/telegram")
+async def connect_telegram(body, user=Depends(get_current_user_db_id)):
+    """
+    This function saves the user's telegram chat id.
+    """
+    chat_id = body.get("chat_id", "").strip()
+
+    if not chat_id:
+        raise HTTPException(status_code=400, detail="chat_id is required")
+    
+    sql = """
+        UPDATE users
+        SET telegram_chat_id = %s
+        WHERE id = %s
+    """
+
+    with get_supabase_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (chat_id, user['id']))
+        conn.commit()
+
+    # from telegram_alerts import send_message
+    # send_message(chat_id, (
+    #     "✅ *PerpScope Telegram connected!*\n\n"
+    #     "You will receive alerts here when opportunities are detected.\n"
+    #     "Manage alerts at: perpscope-frontend.nwosudavid13.workers.dev/account"
+    # ))
+
+    return {"status": "ok", "message": "Telegram connected"}
+
+
+# ------------------------------ ALERT MANAGEMENT -------------------------------
+@app.get("/api/user/alerts")
+async def get_alerts(user=Depends(get_current_user_db_id)):
+    """This function returns all alerts for the current user"""
+    sql = """
+        SELECT
+            id,
+            symbol, 
+            market_cap_tier,
+            threshold_tier,
+            min_rho,
+            is_active,
+            created_at,
+            last_triggered
+        FROM user_alerts,
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+    """
+
+    with get_supabase_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (user['id'],))
+            rows = cur.fetchall()
+
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/user/alerts")
+async def create_alert(body, user=Depends(get_current_user_db_id)):
+    """This function creates a new alert for the current user."""
+    if user['plan'] == "free":
+        count_sql =  """
+            SELECT COUNT(*) as c
+            FROM user_alerts
+            WHERE user_id = %s
+              AND is_active = true
+        """
+        with get_supabase_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(count_sql, (user['id'],))
+                row = cur.fetchone()
+        if row['c'] >= 3:
+            raise HTTPException(
+                status_code=403,
+                detail="Free plan limited to 3 active alerts. Upgrade to Pro for unlimited alerts."
+            )
+        
+    sql = """
+        INSERT INTO user_alerts
+            (user_id, symbol, market_cap_tier, threshold_tier,
+            alert_channel, min_rho, is_active)
+        VALUES
+            (%s, %s, %s, %s, 'telegram', %s, true)
+        RETURNING id
+    """
+
+    with get_supabase_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (
+                user['id'],
+                body.get('symbol'),
+                body.get('market_cap_tier'),
+                body.get('threshold_tier', 'high'),
+                float(body.get('min_rho', 1.0))
+            ))
+            new_id = cur.fetchone()['id']
+        conn.commit()
+
+    return {"id": new_id, "status": "created"}
+
+
+@app.delete("/api/user/alerts/{alert_id}")
+async def delete_alert(alert_id, user=Depends(get_current_user_db_id)):
+    """
+    This function deletes one of the current user's alerts.
+    """
+    sql = """
+        DELETE FROM user_alerts
+        WHERE id = %s AND user_id = %s
+    """
+
+    with get_supabase_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (alert_id, user['id']))
+        conn.commit()
+
+    return {"status": "deleted"}
 
 
 if __name__ == "__main__":
