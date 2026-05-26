@@ -85,6 +85,31 @@ def create_supabase_tables():
             );
             """
         ),
+
+        # Alert state table
+        (
+            "alert_state table",
+            """
+            CREATE TABLE IF NOT EXISTS alert_state (
+                id                    BIGSERIAL     PRIMARY KEY,
+                user_id               BIGINT        REFERENCES users(id),
+                symbol                VARCHAR(20)   NOT NULL,
+                state                 VARCHAR(20)   NOT NULL DEFAULT 'NEUTRAL',
+                opened_at             TIMESTAMPTZ,
+                entry_rho             DOUBLE PRECISION,
+                last_alert_rho        DOUBLE PRECISION,
+                last_alerted_at       TIMESTAMPTZ,
+                UNIQUE (user_id, symbol)
+            );
+            """
+        ),
+        (
+            "create alert_state_user index",
+            """
+            CREATE INDEX IF NOT EXISTS idx_alert_state_user
+            ON alert_state (user_id, state)
+            """
+        )
     ]
 
     with get_supabase_connection() as conn:
@@ -115,6 +140,6 @@ def alter_table(table_name, old_column_name, new_column_name):
 
 
 if __name__ == "__main__":
-    # create_supabase_tables()
+    create_supabase_tables()
 
-    alter_table("user_alerts", "alter_channel", "alert_channel")
+    # alter_table("user_alerts", "alter_channel", "alert_channel")
