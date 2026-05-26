@@ -1,6 +1,7 @@
 import sys
 import os
 import psycopg2
+import psycopg2.extras
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
@@ -100,5 +101,20 @@ def create_supabase_tables():
     log(f"\nAll Supabase Tables Created Successfully!!!")
 
 
+def alter_table(table_name, old_column_name, new_column_name):
+    sql = f"""
+        ALTER TABLE {table_name}
+        RENAME COLUMN {old_column_name} TO {new_column_name}
+    """
+    with get_supabase_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+
+    log(f"Successfully changed the column name in {table_name} database table")
+
+
 if __name__ == "__main__":
-    create_supabase_tables()
+    # create_supabase_tables()
+
+    alter_table("user_alerts", "alter_channel", "alert_channel")
