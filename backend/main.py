@@ -986,12 +986,12 @@ async def connect_telegram(body, user=Depends(get_current_user_db_id)):
             cur.execute(sql, (chat_id, user['id']))
         conn.commit()
 
-    # from telegram_alerts import send_message
-    # send_message(chat_id, (
-    #     "✅ *PerpScope Telegram connected!*\n\n"
-    #     "You will receive alerts here when opportunities are detected.\n"
-    #     "Manage alerts at: perpscope-frontend.nwosudavid13.workers.dev/account"
-    # ))
+    from telegram_alerts import send_message
+    send_message(chat_id, (
+        "✅ *PerpScope Telegram connected!*\n\n"
+        "You will receive alerts here when opportunities are detected.\n"
+        "Manage alerts at: perpscope-frontend.nwosudavid13.workers.dev/account"
+    ))
 
     return {"status": "ok", "message": "Telegram connected"}
 
