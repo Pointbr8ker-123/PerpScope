@@ -7,7 +7,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import ALL_COINS, SLEEP_BETWEEN_CALLS
 from collect_historical import fetch_funding_rates_page, fetch_klines_page
+from calculate_rho import calculate_current_opportunities
 from backend.database.timescale import get_connection
+from backend.telegram_alerts import check_and_send_alerts
 from utils import log, now_ms
 
 
@@ -263,6 +265,16 @@ def run_price_update(max_workers=10):
 
     # Clean up old data after insertion
     cleanup_old_data()
+
+    try:
+        opps_df = calculate_current_opportunities(threshold_tier='high')
+        if not opps_df.empty:
+            opps_list = opps_df.to_dict('records')
+            alerts_sent = check_and_send_alerts(opps_list)
+            log(f"Alert engine: {alerts_sent} alerts sent")
+
+    except Exception as e:
+        log(f"Alert engine error: {e}")
 
     db_size = get_database_size()
     duration = (datetime.now() - start_time).seconds

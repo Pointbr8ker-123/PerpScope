@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 
 from database.timescale import get_connection
 from database.supabase import get_supabase_connection
+from telegram_alerts import send_message
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
@@ -1083,6 +1084,51 @@ async def delete_alert(alert_id, user=Depends(get_current_user_db_id)):
         conn.commit()
 
     return {"status": "deleted"}
+
+
+@app.post("/webhook/telegram")
+async def telegram_webhook(request):
+    """
+    Telegram calls this url whenever someone sends a message to the PerpScope bot.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": True}
+    
+    message  = body.get('message', {})
+    chat_id  = message.get('chat', {}).get('id')
+    text     = message.get('text', '')
+    username = message.get('from', {}).get('username', 'unknown')
+
+    if not chat_id:
+        return {"ok": True}
+    
+    if '/start' in text:
+        reply_text = (
+            f"👋 *Welcome to PerpScope Alerts!*\n\n"
+            f"Your Chat ID is:\n"
+            f"`{chat_id}`\n\n"
+            f"Copy this number and paste it into your "
+            f"PerpScope account settings at:\n"
+            f"perpscope-frontend.nwosudavid13.workers.dev/account\n\n"
+            f"You will then receive real-time alerts when "
+            f"funding rate opportunities are detected for "
+            f"your watched coins."
+        )
+        send_message(str(chat_id), reply_text)
+        logger.info(f"Sent chat_id to @{username} ({chat_id})")
+
+    elif '/stop' in text:
+        reply_text = (
+            f"🛑 *Alerts paused*\n\n"
+            f"You will no longer receive PerpScope alerts.\n"
+            f"Send /start to resume."
+        )
+        send_message(str(chat_id), reply_text)
+        logger.info(f"Paused alerts for @{username}")
+
+    return {"ok": True}
 
 
 if __name__ == "__main__":
