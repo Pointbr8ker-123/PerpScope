@@ -6,7 +6,7 @@ import numpy as np
 import uvicorn
 from datetime import datetime, timezone
 from jose import jwt, JWTError, jwk
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Depends, Request
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Depends, Request, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -967,7 +967,9 @@ async def get_profile(user=Depends(get_current_user_db_id)):
 
 
 @app.post("/api/user/telegram")
-async def connect_telegram(body, user=Depends(get_current_user_db_id)):
+async def connect_telegram(body: dict = Body(...), 
+                           user=Depends(get_current_user_db_id)
+):
     """
     This function saves the user's telegram chat id.
     """
