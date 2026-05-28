@@ -139,7 +139,22 @@ def alter_table(table_name, old_column_name, new_column_name):
     log(f"Successfully changed the column name in {table_name} database table")
 
 
+def add_column(table_name, column_name, data_type):
+    sql = f"""
+        ALTER TABLE {table_name}
+        ADD COLUMN IF NOT EXISTS {column_name} {data_type}
+    """
+    with get_supabase_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+
+    log(f"Successfully added the column '{column_name}' to the {table_name} database table")
+
+
 if __name__ == "__main__":
-    create_supabase_tables()
+    # create_supabase_tables()
 
     # alter_table("user_alerts", "alter_channel", "alert_channel")
+
+    add_column("users", "telegram_chat_id", "VARCHAR(50)")
