@@ -1028,12 +1028,7 @@ async def get_alerts(user=Depends(get_current_user_db_id)):
 async def create_alert(body, user=Depends(get_current_user_db_id)):
     """This function creates a new alert for the current user."""
     if user['plan'] == "free":
-        count_sql =  """
-            SELECT COUNT(*) as c
-            FROM user_alerts
-            WHERE user_id = %s
-              AND is_active = true
-        """
+        count_sql = "SELECT COUNT(*) as c FROM user_alerts WHERE user_id = %s AND is_active = true"
         with get_supabase_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(count_sql, (user['id'],))
