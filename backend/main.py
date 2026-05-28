@@ -1011,7 +1011,7 @@ async def get_alerts(user=Depends(get_current_user_db_id)):
             is_active,
             created_at,
             last_triggered
-        FROM user_alerts,
+        FROM user_alerts
         WHERE user_id = %s
         ORDER BY created_at DESC
     """
