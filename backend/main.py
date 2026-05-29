@@ -999,6 +999,17 @@ async def connect_telegram(body: dict = Body(...),
     return {"status": "ok", "message": "Telegram connected"}
 
 
+@app.get("/api/user/telegram")
+async def get_telegram_status(user=Depends(get_current_user_db_id)):
+    """
+    This function returns whether the user has connected Telegram.
+    """
+    return {
+        "connected": user['telegram_chat_id'] is not None,
+        "chat_id":   user['telegram_chat_id'],
+    }
+
+
 # ------------------------------ ALERT MANAGEMENT -------------------------------
 @app.get("/api/user/alerts")
 async def get_alerts(user=Depends(get_current_user_db_id)):
@@ -1027,8 +1038,63 @@ async def get_alerts(user=Depends(get_current_user_db_id)):
 
 
 @app.post("/api/user/alerts")
-async def create_alert(body, user=Depends(get_current_user_db_id)):
+async def create_alert(body: dict = Body(...), 
+                       user=Depends(get_current_user_db_id)
+):
     """This function creates a new alert for the current user."""
+    logger.info(f"Alert creation body: {body}")
+
+    symbol = body.get('symbol') or None
+    
+    tier_raw = body.get('tier') or body.get('market_cap_tier') or 'ALL'
+    market_cap_tier = None if tier_raw == 'ALL' else tier_raw
+
+    threshold_raw = (
+        body.get('threshold') or
+        body.get('threshold_tier') or
+        'RETAIL'
+    )
+
+    threshold_map = {
+        'RETAIL':       'high',
+        'FUND':         'medium',
+        'INSTITUTION':  'low',
+        'MARKET_MAKER': 'no_fee',
+        'MM':           'no_fee',
+        'HIGH':         'high',
+        'MEDIUM':       'medium',
+        'LOW':          'low',
+        'NO_FEE':       'no_fee',
+    }
+
+    threshold_tier = threshold_map.get(threshold_raw.upper(), 'high')
+
+    min_rho_raw = body.get('min_rho')
+
+    if min_rho_raw is None:
+        min_rho = 1.0
+    else:
+        try:
+            min_rho = float(min_rho_raw)
+        except(TypeError, ValueError):
+            raise HTTPException(
+                status_code=422,
+                detail=f"min_rho must be a number. Received: {min_rho_raw!r}"
+            )
+        
+        if min_rho < 0:
+            raise HTTPException(
+                status_code=422,
+                detail="min_rho must be positive."
+            )
+        
+        if min_rho > 5.0:
+            raise HTTPException(
+                status_code=422,
+                detail=f"min_rho value {min_rho} seems unusually large. "
+                       f"Maximum allowed is 5.0 (500% annualized)."
+            )
+
     if user['plan'] == "free":
         count_sql = "SELECT COUNT(*) as c FROM user_alerts WHERE user_id = %s AND is_active = true"
         with get_supabase_connection() as conn:
@@ -1054,10 +1120,10 @@ async def create_alert(body, user=Depends(get_current_user_db_id)):
         with conn.cursor() as cur:
             cur.execute(sql, (
                 user['id'],
-                body.get('symbol'),
-                body.get('market_cap_tier'),
-                body.get('threshold_tier', 'high'),
-                float(body.get('min_rho', 1.0))
+                symbol,
+                market_cap_tier,
+                threshold_tier,
+                min_rho
             ))
             new_id = cur.fetchone()['id']
         conn.commit()
