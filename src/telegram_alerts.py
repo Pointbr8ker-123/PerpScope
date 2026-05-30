@@ -2,8 +2,7 @@ import os
 import logging
 import requests
 from datetime import datetime, timezone
-from database.timescale import get_connection
-from database.supabase import get_supabase_connection
+from backend.database.supabase import get_supabase_connection
 
 logger = logging.getLogger(__name__)
 

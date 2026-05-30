@@ -9,7 +9,7 @@ from config import ALL_COINS, SLEEP_BETWEEN_CALLS
 from collect_historical import fetch_funding_rates_page, fetch_klines_page
 from calculate_rho import calculate_current_opportunities
 from backend.database.timescale import get_connection
-from backend.telegram_alerts import check_and_send_alerts
+from telegram_alerts import check_and_send_alerts
 from utils import log, now_ms
 
 
