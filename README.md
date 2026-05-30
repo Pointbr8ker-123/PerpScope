@@ -2,8 +2,8 @@
 
 > Real-time funding rate deviation analytics across 200+ altcoin perpetual futures.
 
-**Live Platform:** https://perpscope-frontend.nwosudavid13.workers.dev/
-**Research Basis:** He, Manela, Ross & von Wachter (2024) — 
+- **Live Platform:** https://perpscope-frontend.nwosudavid13.workers.dev/
+- **Research Basis:** He, Manela, Ross & von Wachter (2024) — 
 *Fundamentals of Perpetual Futures:* https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4301150
 
 ---
@@ -50,6 +50,7 @@ Annualized by multiplying by 1095 (i.e 3 funding periods/day x 365 days/year)
 - r ≈ 0.0000548 (risk-free rate proxy, ~6% annual stablecoin lending)
 
 **Original research contribution:**
+
 This project extends He et al.'s framework — originally applied to 5
 large-cap coins — to a universe of 300+ altcoins, testing whether funding
 rate deviation magnitude varies systematically with market capitalisation.
