@@ -204,3 +204,38 @@ python3 update_data.py funding   # 8-hour funding rates
 ```
 
 ---
+## Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+**Database**
+- TIMESCALE_URL=postgresql://...        # TimescaleDB connection string
+  
+- DATABASE_URL=postgresql:...           # Supabase connection string
+- SUPABASE_URL=https://xxx.supabase.co  # Supabase website url
+- SUPABASE_JWT_SECRET=...
+  
+**Bybit API**
+- BYBIT_API_KEY=...
+- BYBIT_SECRET_KEY=...
+  
+**Telegram**
+- TELEGRAM_BOT_TOKEN=...
+  
+**Automation**
+- CRON_SECRET=...                    # Secret key for cron-job.org triggers
+- RENDER_URL=https://your-app.onrender.com
+
+---
+
+## Frontend
+
+The frontend (perpscope-frontend repository) was generated using
+[Lovable](https://lovable.dev) based on a detailed specification
+that matched my FastAPI backend's API responses, and Lovable 
+built the React components from that. 
+
+The frontend connects to the FastAPI backend via the endpoints 
+documented at `/docs` on the running server.
+
+---
