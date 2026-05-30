@@ -58,43 +58,33 @@ Early results suggest small-cap altcoins exhibit 3-7× higher mean |ρ|
 than large-cap coins, consistent with reduced arbitrage capital in less
 liquid markets.
 
+---
 
-```mermaid
-graph LR
-    subgraph Triggers
-        A[cron-job.org]
-    end
-    
-    subgraph Backend
-        B[FastAPI<br>Render / Frankfurt EU]
-    end
-    
-    subgraph Databases
-        C[TimescaleDB<br>Time-series]
-        D[Supabase<br>Users/Alerts]
-    end
-    
-    subgraph Pipeline
-        E[collect_historical.py]
-        F[update_data.py]
-        G[calculate_rho.py]
-        H[telegram_alerts.py]
-    end
-    
-    subgraph External
-        I[Bybit API]
-        J[Telegram]
-    end
-    
-    A -->|HTTP POST| B
-    B --> C
-    B --> D
-    B --> E
-    B --> H
-    E --> I
-    F --> I
-    G --> C
-    H --> J
-```
+### Architecture
 
+- **cron-job.org** (free)
+  - Triggers price updates (hourly)
+  - Triggers funding rate updates (every 8 hours)
+  - HTTP POST to FastAPI backend
+
+- **FastAPI Backend** (Render, Frankfurt EU)
+  - Data endpoints for frontend (`/api/opportunities`, `/api/coin/{symbol}`)
+  - Automation trigger endpoints (`/trigger/prices`, `/trigger/funding`)
+  - User authentication via Supabase JWT
+  - Telegram webhook for bot commands (`/webhook/telegram`)
+
+- **Databases**
+  - **TimescaleDB**: Time-series storage for perp prices, spot prices, funding rates
+  - **Supabase PostgreSQL**: User accounts, alert preferences, authentication
+
+- **Data Pipeline** (`src/`)
+  - `collect_historical.py`: One-time historical data pull from Bybit
+  - `update_data.py`: Incremental 8-hour (funding) and hourly (price) updates
+  - `calculate_rho.py`: Core ρ (rho) deviation calculation engine
+  - `telegram_alerts.py`: State-machine alert engine (open/close/intensify)
+
+- **Bybit API**
+  - Source of all market data
+  - Perpetual futures OHLCV, spot OHLCV, and 8-hour funding rates
+  - Covers 300+ USDT-margined altcoin contracts
 ---
