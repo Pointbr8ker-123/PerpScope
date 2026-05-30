@@ -150,3 +150,57 @@ This ensures every alert represents a genuinely profitable opportunity
 for that specific user.
 
 ---
+
+## Running Locally
+
+**Prerequisites:** Python 3.11+, Node.js 18+, PostgreSQL
+
+```bash
+# Clone
+git clone https://github.com/Pointbr8ker-123/PerpScope.git
+cd perpscope
+
+# Backend setup
+cd backend
+python3 -m venv venv
+source venv/bin/activate      # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Environment variables
+cp .env.example .env
+# Edit .env with your DATABASE_URL, BYBIT_API_KEY, etc.
+
+# Run FastAPI locally
+python3 main.py
+# API available at http://localhost:8000
+# Interactive docs at http://localhost:8000/docs
+
+# Run tests
+cd ..
+cd tests
+python3 test_connection.py     # to check for a successful db connection
+python3 test_calculate_rho.py
+python3 test_api_endpoints.py  # requires running server
+```
+
+**Data pipeline:**
+
+```bash
+cd ..
+cd src
+
+# Discover available Bybit perpetuals
+python3 get_universe.py
+
+# Classify by market cap (requires CoinGecko API)
+python3 get_market_caps.py
+
+# Collect historical data (run once)
+python3 collect_historical.py
+
+# Start incremental updates
+python3 update_data.py prices    # hourly prices
+python3 update_data.py funding   # 8-hour funding rates
+```
+
+---
