@@ -90,38 +90,40 @@ liquid markets.
 ---
 
 ## Repository Structure
+```
 perpscope/
 │
-├── backend/                    # FastAPI backend (deployed on Render)
+├── backend/                     # FastAPI backend (deployed on Render)
 │   ├── database/
-│   │   ├── timescale.py        # TimescaleDB connection + price queries
-│   │   └── supabase.py         # Supabase connection + user queries
-│   ├── main.py                 # FastAPI app — all API endpoints
+│   │   ├── timescale.py         # TimescaleDB connection + price queries
+│   │   └── supabase.py          # Supabase connection + user queries
+│   ├── main.py                  # FastAPI app — all API endpoints
 │   └── requirements.txt
 │
-├── src/                        # Data pipeline
-│   ├── config.py               # Coin universe, constants, paths
-│   ├── collect_historical.py   # One-time historical data collection
-│   ├── update_data.py          # Incremental hourly/8hr updates
-│   ├── calculate_rho.py        # He et al. ρ deviation formula
-│   ├── calculate_funding.py    # Funding rate display calculations
-│   ├── get_universe.py         # Bybit perpetual contract discovery
-│   ├── get_market_caps.py      # CoinGecko market cap classification
-│   ├── telegram_alerts.py      # State-machine alert engine
-│   ├── utils.py                # Shared utilities (timestamps, custom logging)
-│   └── setup_webhook.py        # One-time Telegram webhook registration
+├── src/                         # Data pipeline
+│   ├── config.py                # Coin universe, constants, paths
+│   ├── collect_historical.py    # One-time historical data collection
+│   ├── update_data.py           # Incremental hourly/8hr updates
+│   ├── calculate_rho.py         # He et al. ρ deviation formula
+│   ├── calculate_funding.py     # Funding rate display calculations
+│   ├── get_universe.py          # Bybit perpetual contract discovery
+│   ├── get_market_caps.py       # CoinGecko market cap classification
+│   ├── telegram_alerts.py       # State-machine alert engine
+│   ├── utils.py                 # Shared utilities (timestamps, custom logging)
+│   └── setup_webhook.py         # One-time Telegram webhook registration
 │
 ├── tests/
-│   ├── test_calculate_rho.py   # Unit tests for ρ calculation
-│   ├── test_connection.py      # Tests connection to Bybit API
-│   └── test_api_endpoints.py   # Integration tests for API endpoints
+│   ├── test_calculate_rho.py    # Unit tests for ρ calculation
+│   ├── test_connection.py       # Tests connection to Bybit API
+│   └── test_api_endpoints.py    # Integration tests for API endpoints
 │
 ├── .github/
 │   └── workflows/
-│       ├── update_prices.yml   # Hourly price update (GitHub Actions backup)
-│       └── update_funding.yml  # 8-hour funding rate update (backup)
+│       ├── update_prices.yml    # Hourly price update (GitHub Actions backup)
+│       └── update_funding.yml   # 8-hour funding rate update (backup)
 │
-├── coin_universe.json          # Discovered Bybit perpetual contracts
-├── market_cap_classification.json  # CoinGecko tier classification
+├── coin_universe.json           # Discovered Bybit perpetual contracts
+├── market_cap_classification.json # CoinGecko tier classification
 ├── .gitignore
 └── README.md
+```
