@@ -2,8 +2,8 @@
 
 > Real-time funding rate deviation analytics across 200+ altcoin perpetual futures.
 
-**Live Platform:** https://perpscope-frontend.nwosudavid13.workers.dev/
-**Research Basis:** He, Manela, Ross & von Wachter (2024) — 
+- **Live Platform:** https://perpscope-frontend.nwosudavid13.workers.dev/
+- **Research Basis:** He, Manela, Ross & von Wachter (2024) — 
 *Fundamentals of Perpetual Futures:* https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4301150
 
 ---
@@ -50,9 +50,41 @@ Annualized by multiplying by 1095 (i.e 3 funding periods/day x 365 days/year)
 - r ≈ 0.0000548 (risk-free rate proxy, ~6% annual stablecoin lending)
 
 **Original research contribution:**
+
 This project extends He et al.'s framework — originally applied to 5
 large-cap coins — to a universe of 300+ altcoins, testing whether funding
 rate deviation magnitude varies systematically with market capitalisation.
 Early results suggest small-cap altcoins exhibit 3-7× higher mean |ρ|
 than large-cap coins, consistent with reduced arbitrage capital in less
 liquid markets.
+
+---
+
+### Architecture
+
+- **cron-job.org** (free)
+  - Triggers price updates (hourly)
+  - Triggers funding rate updates (every 8 hours)
+  - HTTP POST to FastAPI backend
+
+- **FastAPI Backend** (Render, Frankfurt EU)
+  - Data endpoints for frontend (`/api/opportunities`, `/api/coin/{symbol}`)
+  - Automation trigger endpoints (`/trigger/prices`, `/trigger/funding`)
+  - User authentication via Supabase JWT
+  - Telegram webhook for bot commands (`/webhook/telegram`)
+
+- **Databases**
+  - **TimescaleDB**: Time-series storage for perp prices, spot prices, funding rates
+  - **Supabase PostgreSQL**: User accounts, alert preferences, authentication
+
+- **Data Pipeline** (`src/`)
+  - `collect_historical.py`: One-time historical data pull from Bybit
+  - `update_data.py`: Incremental 8-hour (funding) and hourly (price) updates
+  - `calculate_rho.py`: Core ρ (rho) deviation calculation engine
+  - `telegram_alerts.py`: State-machine alert engine (open/close/intensify)
+
+- **Bybit API**
+  - Source of all market data
+  - Perpetual futures OHLCV, spot OHLCV, and 8-hour funding rates
+  - Covers 300+ USDT-margined altcoin contracts
+---
