@@ -135,11 +135,11 @@ The Telegram alert engine uses three states — neutral, active, closing —
 so it only messages you when an opportunity actually opens, strengthens, 
 or closes, so as to avoid spamming the user:
 
-NEUTRAL → ACTIVE:   "Opportunity opened" alert sent immediately
-ACTIVE  → CLOSING:  Waits one additional check (avoids false closes)
-CLOSING → NEUTRAL:  "Opportunity closed" alert sent (confirmed close)
-CLOSING → ACTIVE:   Brief dip detected, recovers silently
-ACTIVE  → ACTIVE:   "Intensified" alert only if ρ increases >50%
+- NEUTRAL → ACTIVE:   "Opportunity opened" alert sent immediately
+- ACTIVE  → CLOSING:  Waits one additional check (avoids false closes)
+- CLOSING → NEUTRAL:  "Opportunity closed" alert sent (confirmed close)
+- CLOSING → ACTIVE:   Brief dip detected, recovers silently
+- ACTIVE  → ACTIVE:   "Intensified" alert only if ρ increases >50%
 
 Users can configure alerts with these three parameters:
 - **Market cap tier** — Large/Mid/Small Cap or all
