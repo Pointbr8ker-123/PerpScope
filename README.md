@@ -57,3 +57,42 @@ rate deviation magnitude varies systematically with market capitalisation.
 Early results suggest small-cap altcoins exhibit 3-7× higher mean |ρ|
 than large-cap coins, consistent with reduced arbitrage capital in less
 liquid markets.
+
+
+## Architecture
+┌─────────────────────────────────────────────────────────┐
+│  cron-job.org (free)                                    │
+│  Triggers price updates (hourly) and                    │
+│  funding rate updates (every 8 hours)                   │
+└────────────────────┬────────────────────────────────────┘
+│ HTTP POST
+┌────────────────────▼────────────────────────────────────┐
+│  FastAPI Backend (Render, Frankfurt EU)                 │
+│  backend/main.py                                        │
+│  · Data endpoints for frontend                          │
+│  · Automation trigger endpoints                         │
+│  · User authentication via Supabase JWT                 │
+│  · Telegram webhook for bot commands                    │
+└──────────┬──────────────────────────────────────────────┘
+│                          │
+┌──────────▼──────────┐   ┌──────────▼──────────────────┐
+│  TimescaleDB        │   │  Supabase PostgreSQL         │
+│  Price + funding    │   │  Users, alerts, auth         │
+│  rate time-series   │   │                              │
+└─────────────────────┘   └──────────────────────────────┘
+▲
+┌──────────┴──────────────────────────────────────────────┐
+│  Data Pipeline (src/)                                   │
+│  · collect_historical.py — one-time historical pull     │
+│  · update_data.py — incremental 8-hour/hourly updates   │
+│  · calculate_rho.py — ρ deviation engine                │
+│  · telegram_alerts.py — state-machine alert engine      │
+└─────────────────────────────────────────────────────────┘
+▲
+┌──────────┴──────────────────────────────────────────────┐
+│  Bybit API (api.bybit.com)                              │
+│  Perpetual futures + spot OHLCV + funding rates         │
+│  300+ USDT-margined contracts                           │
+└─────────────────────────────────────────────────────────┘
+
+---
