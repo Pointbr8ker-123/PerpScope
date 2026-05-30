@@ -59,40 +59,42 @@ than large-cap coins, consistent with reduced arbitrage capital in less
 liquid markets.
 
 
-## Architecture
-┌─────────────────────────────────────────────────────────┐
-│  cron-job.org (free)                                    │
-│  Triggers price updates (hourly) and                    │
-│  funding rate updates (every 8 hours)                   │
-└────────────────────┬────────────────────────────────────┘
-│ HTTP POST
-┌────────────────────▼────────────────────────────────────┐
-│  FastAPI Backend (Render, Frankfurt EU)                 │
-│  backend/main.py                                        │
-│  · Data endpoints for frontend                          │
-│  · Automation trigger endpoints                         │
-│  · User authentication via Supabase JWT                 │
-│  · Telegram webhook for bot commands                    │
-└──────────┬──────────────────────────────────────────────┘
-│                          │
-┌──────────▼──────────┐   ┌──────────▼──────────────────┐
-│  TimescaleDB        │   │  Supabase PostgreSQL         │
-│  Price + funding    │   │  Users, alerts, auth         │
-│  rate time-series   │   │                              │
-└─────────────────────┘   └──────────────────────────────┘
-▲
-┌──────────┴──────────────────────────────────────────────┐
-│  Data Pipeline (src/)                                   │
-│  · collect_historical.py — one-time historical pull     │
-│  · update_data.py — incremental 8-hour/hourly updates   │
-│  · calculate_rho.py — ρ deviation engine                │
-│  · telegram_alerts.py — state-machine alert engine      │
-└─────────────────────────────────────────────────────────┘
-▲
-┌──────────┴──────────────────────────────────────────────┐
-│  Bybit API (api.bybit.com)                              │
-│  Perpetual futures + spot OHLCV + funding rates         │
-│  300+ USDT-margined contracts                           │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+graph LR
+    subgraph Triggers
+        A[cron-job.org]
+    end
+    
+    subgraph Backend
+        B[FastAPI<br>Render / Frankfurt EU]
+    end
+    
+    subgraph Databases
+        C[TimescaleDB<br>Time-series]
+        D[Supabase<br>Users/Alerts]
+    end
+    
+    subgraph Pipeline
+        E[collect_historical.py]
+        F[update_data.py]
+        G[calculate_rho.py]
+        H[telegram_alerts.py]
+    end
+    
+    subgraph External
+        I[Bybit API]
+        J[Telegram]
+    end
+    
+    A -->|HTTP POST| B
+    B --> C
+    B --> D
+    B --> E
+    B --> H
+    E --> I
+    F --> I
+    G --> C
+    H --> J
+```
 
 ---
