@@ -229,7 +229,7 @@ def update_coin_prices(symbol):
     
 
 # ------------------------ Pipeline 1: Hourly Price Update ------------------------------
-def run_price_update(max_workers=10):
+def run_price_update(max_workers=5):
     """
     This function is the Pipeline that runs every hour via Github actions
     
@@ -292,7 +292,7 @@ def run_price_update(max_workers=10):
 
 
 # --------------------------Pipeline 2: 8-hour Funding Rates Update ---------------------------------
-def run_funding_rates_update(max_workers=10):
+def run_funding_rates_update(max_workers=5):
     """
     This function represents the second pipeline that runs every 8hrs via
     Github actions.
