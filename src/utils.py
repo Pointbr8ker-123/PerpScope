@@ -32,3 +32,6 @@ def log_info(msg):
 
 def log_warn(msg):
     logger.warning(msg)
+
+def log_err(msg):
+    logger.error(msg)
