@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 
 from database.timescale import get_connection
 from database.supabase import get_supabase_connection
-from telegram_alerts import send_message
+from src.telegram_alerts import send_message
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
