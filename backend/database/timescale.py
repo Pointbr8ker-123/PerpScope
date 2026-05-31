@@ -1,12 +1,15 @@
 import sys
 import os
+import json
+import pandas as pd
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
 
 from backend.database.db_config import TIMESCALE_DATABASE_URL
 from backend.database.supabase import get_supabase_connection
-from src.utils import log
+from src.config import BASE_DIR, DATA_DIR, ALL_COINS
+from src.utils import log, now_ms
 
 import psycopg2
 from psycopg2.extras import execute_values
@@ -41,32 +44,32 @@ def create_timescale_tables():
 
     statements = [
         # ------------------------ Coin Universe ----------------------------
-        # (
-        #     "Create coin_universe table",
-        #     """
-        #     CREATE TABLE IF NOT EXISTS coin_universe (
-        #         symbol              VARCHAR(20)  PRIMARY KEY,
-        #         name                VARCHAR(100),
-        #         coingecko_id        VARCHAR(100),
-        #         market_cap          BIGINT,
-        #         market_cap_rank     INTEGER,
-        #         market_cap_tier     VARCHAR(20),
-        #         has_spot_market     BOOLEAN      DEFAULT true,
-        #         is_active           BOOLEAN      DEFAULT true,
-        #         last_updated        TIMESTAMPTZ  DEFAULT NOW()
-        #     );
-        #     """
-        # ),
-        # (
-        #     "Add indexes to coin_universe",
-        #     """
-        #     CREATE INDEX IF NOT EXISTS idx_coin_universe_tier
-        #     ON coin_universe (market_cap_tier, last_updated DESC);
+        (
+            "Create coin_universe table",
+            """
+            CREATE TABLE IF NOT EXISTS coin_universe (
+                symbol              VARCHAR(20)  PRIMARY KEY,
+                name                VARCHAR(100),
+                coingecko_id        VARCHAR(100),
+                market_cap          BIGINT,
+                market_cap_rank     INTEGER,
+                market_cap_tier     VARCHAR(20),
+                has_spot_market     BOOLEAN      DEFAULT true,
+                is_active           BOOLEAN      DEFAULT true,
+                last_updated        TIMESTAMPTZ  DEFAULT NOW()
+            );
+            """
+        ),
+        (
+            "Add indexes to coin_universe",
+            """
+            CREATE INDEX IF NOT EXISTS idx_coin_universe_tier
+            ON coin_universe (market_cap_tier, last_updated DESC);
             
-        #     CREATE INDEX IF NOT EXISTS idx_coin_universe_active
-        #     ON coin_universe (is_active) WHERE is_active = true;
-        #     """
-        # ),
+            CREATE INDEX IF NOT EXISTS idx_coin_universe_active
+            ON coin_universe (is_active) WHERE is_active = true;
+            """
+        ),
 
         # ----------------Funding rates table -----------------------------
         (
@@ -76,7 +79,8 @@ def create_timescale_tables():
                 timestamp        TIMESTAMPTZ        NOT NULL,
                 timestamp_ms    BIGINT              NOT NULL,
                 symbol          VARCHAR(20)         NOT NULL,
-                funding_rate    DOUBLE PRECISION    NOT NULL
+                funding_rate    DOUBLE PRECISION    NOT NULL,
+                UNIQUE (symbol, timestamp_ms, timestamp)
             );
             """
         ),
@@ -138,7 +142,8 @@ def create_timescale_tables():
                 high            DOUBLE PRECISION,
                 low             DOUBLE PRECISION,
                 close           DOUBLE PRECISION,
-                volume          DOUBLE PRECISION
+                volume          DOUBLE PRECISION,
+                UNIQUE (symbol, timestamp_ms, timestamp)
             );
             """
         ),
@@ -200,7 +205,8 @@ def create_timescale_tables():
                 high            DOUBLE PRECISION,
                 low             DOUBLE PRECISION,
                 close           DOUBLE PRECISION,
-                volume          DOUBLE PRECISION
+                volume          DOUBLE PRECISION,
+                UNIQUE (symbol, timestamp_ms, timestamp)
             );
             """
         ),
@@ -247,53 +253,6 @@ def create_timescale_tables():
                 INTERVAL '7 days',
                 if_not_exists => TRUE
             );
-            """
-        ),
-
-        # ------------------------Collection_progress table---------------------
-        (
-            "collection_progress table",
-            """
-            CREATE TABLE IF NOT EXISTS collection_progress (
-                symbol                      VARCHAR(20),
-                funding_collection_status   VARCHAR(20)  DEFAULT 'pending',
-                funding_last_collected_ms   BIGINT,
-                funding_total_records       INTEGER      DEFAULT 0,
-                funding_error_message       TEXT,
-                perp_collection_status      VARCHAR(20)  DEFAULT 'pending',
-                perp_last_collected_ms      BIGINT,
-                perp_total_records          INTEGER      DEFAULT 0,
-                perp_error_message          TEXT,
-                spot_collection_status      VARCHAR(20)  DEFAULT 'pending',
-                spot_last_collected_ms      BIGINT,
-                spot_total_records          INTEGER      DEFAULT 0,
-                spot_error_message          TEXT,
-                overall_status              VARCHAR(20)  DEFAULT 'pending',
-                last_attempt                TIMESTAMPTZ,
-                created_at                  TIMESTAMPTZ  DEFAULT NOW(),
-                updated_at                  TIMESTAMPTZ  DEFAULT NOW(),
-                UNIQUE (symbol, created_at)
-            );
-            """
-        ),
-        (
-            "Convert collection_progress to hypertable",
-            """
-            SELECT create_hypertable(
-                'collection_progress',
-                'created_at',
-                if_not_exists => TRUE
-            );
-            """
-        ),
-        (
-            "Add indexes to collection_progress",
-            """
-            CREATE INDEX IF NOT EXISTS idx_collection_status
-            ON collection_progress (overall_status, created_at DESC);
-            
-            CREATE INDEX IF NOT EXISTS idx_collection_symbol_status
-            ON collection_progress (symbol, overall_status);
             """
         ),
 
@@ -387,275 +346,275 @@ def create_timescale_tables():
 
     log(f"\nTimescaleDB Setup complete... All tables created successfully!!!")
 
-# def populate_coin_universe_table(coins):
-#     """
-#     This inserts coin metadata in the coin_universe database table.
-#     """
-#     if not coins:
-#         return 0
+def populate_coin_universe_table(coins):
+    """
+    This inserts coin metadata in the coin_universe database table.
+    """
+    if not coins:
+        return 0
     
-#     sql = """
-#             INSERT INTO coin_universe (
-#                 symbol, name, coingecko_id, market_cap, 
-#                 market_cap_rank, market_cap_tier, has_spot_market,
-#                 is_active, last_updated)
-#             VALUES
-#                 (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
-#             ON CONFLICT (symbol) DO UPDATE SET
-#                 name                = EXCLUDED.name,
-#                 coingecko_id        = EXCLUDED.coingecko_id,
-#                 market_cap          = EXCLUDED.market_cap,
-#                 market_cap_rank     = EXCLUDED.market_cap_rank,
-#                 market_cap_tier     = EXCLUDED.market_cap_tier,
-#                 has_spot_market     = EXCLUDED.has_spot_market,
-#                 is_active           = EXCLUDED.is_active,
-#                 last_updated        = NOW()
-#         """
+    sql = """
+            INSERT INTO coin_universe (
+                symbol, name, coingecko_id, market_cap, 
+                market_cap_rank, market_cap_tier, has_spot_market,
+                is_active, last_updated)
+            VALUES
+                (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            ON CONFLICT (symbol) DO UPDATE SET
+                name                = EXCLUDED.name,
+                coingecko_id        = EXCLUDED.coingecko_id,
+                market_cap          = EXCLUDED.market_cap,
+                market_cap_rank     = EXCLUDED.market_cap_rank,
+                market_cap_tier     = EXCLUDED.market_cap_tier,
+                has_spot_market     = EXCLUDED.has_spot_market,
+                is_active           = EXCLUDED.is_active,
+                last_updated        = NOW()
+        """
     
-#     rows = [
-#         (
-#             c['symbol'],
-#             c.get('name', ''),
-#             c.get('coingecko_id', ''),
-#             c.get('market_cap', 0),
-#             c.get('market_cap_rank', 9999),
-#             c.get('market_cap_tier', 'Unknown'),
-#             c.get('has_spot_market', True),
-#             c.get('is_active', True)
-#         )
-#         for c in coins
-#     ]
+    rows = [
+        (
+            c['symbol'],
+            c.get('name', ''),
+            c.get('coingecko_id', ''),
+            c.get('market_cap', 0),
+            c.get('market_cap_rank', 9999),
+            c.get('market_cap_tier', 'Unknown'),
+            c.get('has_spot_market', True),
+            c.get('is_active', True)
+        )
+        for c in coins
+    ]
 
-#     with get_connection() as conn:
-#         with conn.cursor() as cur:
-#             cur.executemany(sql, rows)
-#         conn.commit()
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.executemany(sql, rows)
+        conn.commit()
 
-#     return len(rows)
-
-
-# def seed_coin_universe_table_from_json(json_path=None):
-#     """
-#     This function reads "market_cap_classification.json" file and populates
-#     the coin_universe database table using the helper function above.
-#     """
-#     if json_path is None:
-#         json_path = os.path.join(BASE_DIR, 'market_cap_classification.json')
-
-#     with open(json_path, 'r') as f:
-#         data = json.load(f)
-
-#     coins = []
-#     for tier in ('large_cap', 'mid_cap', 'small_cap'):
-#         for coin in data[tier]:
-#             coins.append({
-#                 'symbol': coin['symbol'],
-#                 'name': coin['name'],
-#                 'coingecko_id': coin['coingecko_id'],
-#                 'market_cap': coin['market_cap'],
-#                 'market_cap_rank': coin['rank'],
-#                 'market_cap_tier': tier,
-#                 'has_spot_market': True
-#             })
-
-#     inserted = populate_coin_universe_table(coins)
-#     log(f"Upserted {inserted} coins into coin_universe database table")
-#     return inserted
+    return len(rows)
 
 
-# def is_already_loaded(symbol, table):
-#     sql = f"""SELECT 1 FROM {table} WHERE symbol = %s LIMIT 1"""
-#     with get_connection() as conn:
-#         with conn.cursor() as cur:
-#             cur.execute(sql, (symbol,))
-#             return cur.fetchone() is not None
+def seed_coin_universe_table_from_json(json_path=None):
+    """
+    This function reads "market_cap_classification.json" file and populates
+    the coin_universe database table using the helper function above.
+    """
+    if json_path is None:
+        json_path = os.path.join(BASE_DIR, 'market_cap_classification.json')
+
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+
+    coins = []
+    for tier in ('large_cap', 'mid_cap', 'small_cap'):
+        for coin in data[tier]:
+            coins.append({
+                'symbol': coin['symbol'],
+                'name': coin['name'],
+                'coingecko_id': coin['coingecko_id'],
+                'market_cap': coin['market_cap'],
+                'market_cap_rank': coin['rank'],
+                'market_cap_tier': tier,
+                'has_spot_market': True
+            })
+
+    inserted = populate_coin_universe_table(coins)
+    log(f"Upserted {inserted} coins into coin_universe database table")
+    return inserted
 
 
-# def get_already_loaded_symbols(table):
-#     """
-#     This function returns a set of symbols that already have data in the given table.
-#     """
-#     sql = f"SELECT DISTINCT symbol FROM {table}"
-#     with get_connection() as conn:
-#         with conn.cursor() as cur:
-#             cur.execute(sql)
-#             rows = cur.fetchall()
-
-#     return {row['symbol'] for row in rows}
+def is_already_loaded(symbol, table):
+    sql = f"""SELECT 1 FROM {table} WHERE symbol = %s LIMIT 1"""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (symbol,))
+            return cur.fetchone() is not None
 
 
-# def insert_funding_rates(days=90):
-#     """
-#     This function migrates only the last N days from the funding_rates CSV 
-#     files into the funding_rates table in the database.
-#     """
-#     cutoff_ms = now_ms() - (days * 24 * 60 * 60 * 1000)
+def get_already_loaded_symbols(table):
+    """
+    This function returns a set of symbols that already have data in the given table.
+    """
+    sql = f"SELECT DISTINCT symbol FROM {table}"
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+            rows = cur.fetchall()
 
-#     already_loaded = get_already_loaded_symbols('funding_rates')
-#     remaining = [s for s in ALL_COINS if s not in already_loaded]
-
-#     log(f"Loading last {days} days of historical funding rates for {len(remaining)} coins...")
-
-#     total_inserted = 0
-#     missing = []
-
-#     for symbol in remaining:
-#         csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_funding_rates.csv")
-
-#         if not os.path.exists(csv_path):
-#             log(f"WARNING: No funding rates CSV found for {symbol}, skipping...")
-#             missing.append(symbol)
-#             continue
-
-#         try:
-#             df = pd.read_csv(csv_path)
-
-#             df = df[df['timestamp_ms'] >= cutoff_ms]
-
-#             if df.empty:
-#                 log(f"{symbol}: no data in last {days} days, skipping...")
-#                 continue
-
-#             rows = [
-#                 (
-#                     str(row['symbol']) if 'symbol' in df.columns else symbol,
-#                     int(row['timestamp_ms']),
-#                     str(row['timestamp']),
-#                     float(row['funding_rate'])
-#                 )
-#                 for _, row in df.iterrows()
-#             ]
-
-#             sql = """
-#                 INSERT INTO funding_rates
-#                     (symbol, timestamp_ms, timestamp, funding_rate)
-#                 VALUES
-#                     (%s, %s, %s, %s)
-#                 ON CONFLICT (symbol, timestamp_ms) DO NOTHING
-#             """
-
-#             with get_connection() as conn:
-#                 with conn.cursor() as cur:
-#                     cur.executemany(sql, rows)
-#                 conn.commit()
-
-#             total_inserted += len(rows)
-#             log(f"{symbol}: inserted {len(rows)} rows")
-
-#         except Exception as e:
-#             log(f"ERROR on {symbol}: {e}")
-#             missing.append(symbol)
-
-#     log(f"\nDone. Total rows inserted: {total_inserted}")
-
-#     if missing:
-#         log(f"Missing or failed CSVs for {len(missing)} coins: {missing}")
-
-#     return total_inserted
+    return {row['symbol'] for row in rows}
 
 
-# def insert_prices(price_type, database_table, csv_suffix, days=90):
-#     """
-#     This function migrates only the last N days from the perp_prices
-#     and spot_prices CSV files into their respective tables in the database.
-#     """
-#     cutoff_ms = now_ms() - (days * 24 * 60 * 60 * 1000)
-#     already_loaded = get_already_loaded_symbols(database_table)
-#     remaining = [s for s in ALL_COINS if s not in already_loaded]
+def insert_funding_rates(days=90):
+    """
+    This function migrates only the last N days from the funding_rates CSV 
+    files into the funding_rates table in the database.
+    """
+    cutoff_ms = now_ms() - (days * 24 * 60 * 60 * 1000)
 
-#     log(f"Loading last {days} days of {price_type} prices for {len(remaining)} coins")
+    already_loaded = get_already_loaded_symbols('funding_rates')
+    remaining = [s for s in ALL_COINS if s not in already_loaded]
 
-#     total_inserted = 0
-#     missing = []
-#     CHUNK_SIZE = 200 
+    log(f"Loading last {days} days of historical funding rates for {len(remaining)} coins...")
 
-#     for symbol in remaining:
-#         csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_{csv_suffix}.csv")
+    total_inserted = 0
+    missing = []
 
-#         if not os.path.exists(csv_path):
-#             missing.append(symbol)
-#             continue
+    for symbol in remaining:
+        csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_funding_rates.csv")
 
-#         try:
-#             df = pd.read_csv(
-#                 csv_path,
-#                 usecols=['timestamp_ms', 'timestamp', 'open', 'high',
-#                          'low', 'close', 'volume'],
-#                 dtype={
-#                     'timestamp_ms': 'int64',
-#                     'open': 'float64', 'high': 'float64',
-#                     'low':  'float64', 'close':'float64',
-#                     'volume': 'float64',
-#                 }
-#             )
-#             df = df[df['timestamp_ms'] >= cutoff_ms]
+        if not os.path.exists(csv_path):
+            log(f"WARNING: No funding rates CSV found for {symbol}, skipping...")
+            missing.append(symbol)
+            continue
 
-#             if df.empty:
-#                 log(f"  {symbol}: no data in last {days} days, skipping")
-#                 continue
+        try:
+            df = pd.read_csv(csv_path)
 
-#             rows = [
-#                 (symbol, int(r.timestamp_ms), r.timestamp,
-#                  r.open, r.high, r.low, r.close, r.volume)
-#                 for r in df.itertuples(index=False)
-#             ]
+            df = df[df['timestamp_ms'] >= cutoff_ms]
 
-#             sql = f"""
-#                 INSERT INTO {database_table}
-#                     (symbol, timestamp_ms, timestamp,
-#                      open, high, low, close, volume)
-#                 VALUES %s
-#                 ON CONFLICT (symbol, timestamp_ms) DO NOTHING
-#             """
+            if df.empty:
+                log(f"{symbol}: no data in last {days} days, skipping...")
+                continue
 
-#             symbol_inserted = 0
-#             for i in range(0, len(rows), CHUNK_SIZE):
-#                 chunk = rows[i : i + CHUNK_SIZE]
-#                 with get_connection() as conn:
-#                     with conn.cursor() as cur:
-#                         cur.execute("SET LOCAL statement_timeout = '120s'")
-#                         execute_values(cur, sql, chunk, page_size=100)
-#                     conn.commit()
-#                 symbol_inserted += len(chunk)
+            rows = [
+                (
+                    str(row['symbol']) if 'symbol' in df.columns else symbol,
+                    int(row['timestamp_ms']),
+                    str(row['timestamp']),
+                    float(row['funding_rate'])
+                )
+                for _, row in df.iterrows()
+            ]
 
-#             total_inserted += symbol_inserted
-#             log(f"  {symbol}: inserted {symbol_inserted:,} rows "
-#                 f"({len(rows)//CHUNK_SIZE + 1} chunks)")
+            sql = """
+                INSERT INTO funding_rates
+                    (symbol, timestamp_ms, timestamp, funding_rate)
+                VALUES
+                    (%s, %s, %s, %s)
+                ON CONFLICT (symbol, timestamp_ms, timestamp) DO NOTHING
+            """
 
-#         except Exception as e:
-#             log(f"  {symbol}: ERROR — {e}")
-#             missing.append(symbol)
+            with get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.executemany(sql, rows)
+                conn.commit()
 
-#     log(f"\nDone. Total inserted: {total_inserted:,}")
-#     if missing:
-#         log(f"Missing/failed: {missing}")
+            total_inserted += len(rows)
+            log(f"{symbol}: inserted {len(rows)} rows")
 
-#     return total_inserted
+        except Exception as e:
+            log(f"ERROR on {symbol}: {e}")
+            missing.append(symbol)
+
+    log(f"\nDone. Total rows inserted: {total_inserted}")
+
+    if missing:
+        log(f"Missing or failed CSVs for {len(missing)} coins: {missing}")
+
+    return total_inserted
 
 
-# def get_coin_universe_from_database():
-#     """
-#     This function returns coin info from the database.
-#     This would work with the FastAPI backend to retrieve coin data for
-#     display on the frontend.
-#     """
-#     sql = """
-#         SELECT
-#             symbol, name, coingecko_id,
-#             market_cap, market_cap_rank,
-#             market_cap_tier, has_spot_market,
-#             is_active
-#         FROM coin_universe
-#         WHERE is_active = true
-#         ORDER BY market_cap_rank ASC NULLS LAST
-#     """
+def insert_prices(price_type, database_table, csv_suffix, days=30):
+    """
+    This function migrates only the last N days from the perp_prices
+    and spot_prices CSV files into their respective tables in the database.
+    """
+    cutoff_ms = now_ms() - (days * 24 * 60 * 60 * 1000)
+    already_loaded = get_already_loaded_symbols(database_table)
+    remaining = [s for s in ALL_COINS if s not in already_loaded]
 
-#     with get_connection() as conn:
-#         with conn.cursor() as cur:
-#             cur.execute(sql)
-#             rows = cur.fetchall()
+    log(f"Loading last {days} days of {price_type} prices for {len(remaining)} coins")
 
-#     return [dict(row) for row in rows]
+    total_inserted = 0
+    missing = []
+    CHUNK_SIZE = 200 
+
+    for symbol in remaining:
+        csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_{csv_suffix}.csv")
+
+        if not os.path.exists(csv_path):
+            missing.append(symbol)
+            continue
+
+        try:
+            df = pd.read_csv(
+                csv_path,
+                usecols=['timestamp_ms', 'timestamp', 'open', 'high',
+                         'low', 'close', 'volume'],
+                dtype={
+                    'timestamp_ms': 'int64',
+                    'open': 'float64', 'high': 'float64',
+                    'low':  'float64', 'close':'float64',
+                    'volume': 'float64',
+                }
+            )
+            df = df[df['timestamp_ms'] >= cutoff_ms]
+
+            if df.empty:
+                log(f"  {symbol}: no data in last {days} days, skipping")
+                continue
+
+            rows = [
+                (symbol, int(r.timestamp_ms), r.timestamp,
+                 r.open, r.high, r.low, r.close, r.volume)
+                for r in df.itertuples(index=False)
+            ]
+
+            sql = f"""
+                INSERT INTO {database_table}
+                    (symbol, timestamp_ms, timestamp,
+                     open, high, low, close, volume)
+                VALUES %s
+                ON CONFLICT (symbol, timestamp_ms, timestamp) DO NOTHING
+            """
+
+            symbol_inserted = 0
+            for i in range(0, len(rows), CHUNK_SIZE):
+                chunk = rows[i : i + CHUNK_SIZE]
+                with get_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SET LOCAL statement_timeout = '120s'")
+                        execute_values(cur, sql, chunk, page_size=100)
+                    conn.commit()
+                symbol_inserted += len(chunk)
+
+            total_inserted += symbol_inserted
+            log(f"  {symbol}: inserted {symbol_inserted:,} rows "
+                f"({len(rows)//CHUNK_SIZE + 1} chunks)")
+
+        except Exception as e:
+            log(f"  {symbol}: ERROR — {e}")
+            missing.append(symbol)
+
+    log(f"\nDone. Total inserted: {total_inserted:,}")
+    if missing:
+        log(f"Missing/failed: {missing}")
+
+    return total_inserted
+
+
+def get_coin_universe_from_database():
+    """
+    This function returns coin info from the database.
+    This would work with the FastAPI backend to retrieve coin data for
+    display on the frontend.
+    """
+    sql = """
+        SELECT
+            symbol, name, coingecko_id,
+            market_cap, market_cap_rank,
+            market_cap_tier, has_spot_market,
+            is_active
+        FROM coin_universe
+        WHERE is_active = true
+        ORDER BY market_cap_rank ASC NULLS LAST
+    """
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+            rows = cur.fetchall()
+
+    return [dict(row) for row in rows]
 
 RETENTION_DAYS = 90
 
@@ -754,4 +713,12 @@ def run_migration():
 if __name__ == "__main__":
     # create_timescale_tables()
 
-    run_migration()
+    # seed_coin_universe_table_from_json()
+
+    # insert_funding_rates()
+
+    # insert_prices('perp_prices', 'perp_prices', 'perp_hourly', days=30)
+
+    insert_prices('spot_prices', 'spot_prices', 'spot_hourly', days=30)
+
+    # run_migration()
