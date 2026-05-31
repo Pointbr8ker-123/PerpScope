@@ -27,9 +27,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def log(msg):
-    """
-    This function prints a message and also writes it to a log file
-    so I can track events even when my terminal is closed.
-    """
+def log_info(msg):
     logger.info(msg)
+
+def log_warn(msg):
+    logger.warning(msg)
