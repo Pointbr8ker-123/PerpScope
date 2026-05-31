@@ -12,10 +12,90 @@ from src.config import BASE_DIR, DATA_DIR, ALL_COINS
 from src.utils import log, now_ms
 
 import psycopg2
-from psycopg2.extras import execute_values
+import psycopg2.extras
+import logging
+import threading
+from contextlib import contextmanager
+from psycopg2.pool import ThreadedConnectionPool
+from psycopg2.extras import RealDictCursor, execute_values
 
 
-def get_timescale_connection():
+logger = logging.getLogger(__name__)
+
+_pool      = None
+_pool_lock = threading.Lock()
+
+
+def create_pool(min_connections=2, max_connections=5):
+    """
+    This function creates the connection pool for an update run.
+    It'd be called once at the start of the run_price_update() and 
+    run_funding_rates_update() functions in update_data.py
+    """
+    global _pool
+
+    with _pool_lock:
+        if _pool is not None:
+            logger.warning("Pool already exists - skipping creation")
+            return
+        
+        _pool = ThreadedConnectionPool(
+            minconn=min_connections,
+            maxconn=max_connections,
+            dsn=TIMESCALE_DATABASE_URL,
+            cursor_factory=RealDictCursor
+        )
+        logger.info(
+            f"Connection pool created "
+            f"(min={min_connections}, max={max_connections})"
+        )
+
+
+def close_pool():
+    """
+    This function closes all connections in the pool.
+    It'd be called once at the end of the run_price_update() and 
+    run_funding_rates_update() functions in update_data.py
+    """
+    global _pool
+
+    with _pool_lock:
+        if _pool is None:
+            return
+        _pool.closeall()
+        _pool = None
+        logger.info("Connection pool closed")
+
+
+@contextmanager
+def get_pooled_connection():
+    """
+    This function is a context manager that borrows a connection from
+    the pool, yields it for use, and returns it when its done.
+    """
+    if _pool is None:
+        raise RuntimeError(
+            "Connection pool is not initialized "
+            "Call create_pool() before using get_pooled_connection()"
+        )
+    
+    conn = None
+    try:
+        conn = _pool.getconn()
+        yield conn
+    except Exception:
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        raise
+    finally:
+        if conn and _pool:
+            _pool.putconn(conn)
+
+
+def get_connection():
     """
     This function connects to TimescaleDB  for time-series data.
 
@@ -23,18 +103,13 @@ def get_timescale_connection():
     
     Tables here: funding_rates, perp_prices, spot_prices,
                 coin_universe, collection_progress
+
+    Returns a non-pooled connection.
     """
     return psycopg2.connect(
         TIMESCALE_DATABASE_URL,
-        cursor_factory=psycopg2.extras.RealDictCursor
+        cursor_factory=RealDictCursor
     )
-
-
-def get_connection():
-    """
-    Default connection, points to timescale for now
-    """
-    return get_timescale_connection()
 
 
 def create_timescale_tables():
@@ -656,7 +731,7 @@ def migrate_tables(source_table, dest_table, columns, use_time_filter=True):
         for row in rows
     ]
 
-    with get_timescale_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             if source_table == 'coin_universe':
                 execute_values(
