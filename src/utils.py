@@ -1,4 +1,5 @@
 import os
+import logging
 from datetime import datetime, timezone
 
 
@@ -18,16 +19,17 @@ def now_ms():
     return int(datetime.now(timezone.utc).timestamp() * 1000)
 
 
-def log(message, log_file='collection_log.txt'):
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
+
+def log(msg):
     """
     This function prints a message and also writes it to a log file
     so I can track events even when my terminal is closed.
     """
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    full_message = f"[{timestamp}] {message}"
-    print(full_message)
-    with open(os.path.join(base_dir, log_file), 'a') as f:
-        f.write(full_message + '\n\n')
-
-
+    logger.info(msg)
