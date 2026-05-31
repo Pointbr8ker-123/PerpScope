@@ -1,7 +1,6 @@
 import httpx
 import os
 import sys
-import logging
 import numpy as np
 import uvicorn
 from datetime import datetime, timezone
@@ -29,18 +28,10 @@ from calculate_rho import (
     THRESHOLDS,
     KAPPA, IOTA, GAMMA, RISK_FREE_RATE_8HR, PERIODS_PER_YEAR
 )
+from utils import log_info, log_warn
 from calculate_funding import annualize_funding_rate, get_funding_signal
 from update_data import run_price_update, run_funding_rates_update
 from database.db_config import SUPABASE_URL, SUPABASE_JWKS_URL
-
-
-# -------------------------------- LOGGING ---------------------------------------------
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
 
 
 # -------------------------------- MARKET CAP DATA --------------------------------------
@@ -81,25 +72,25 @@ def load_market_cap_data():
             }
             ALL_COINS.append(row['symbol'])
 
-        logger.info(f"Loaded {len(MARKET_CAP_LOOKUP)} coins from database")
+        log_info(f"Loaded {len(MARKET_CAP_LOOKUP)} coins from database")
         return
     
     except Exception as e:
-        logger.warning(f"Database load failed: {e}. Trying JSON fallback..."
+        log_warn(f"Database load failed: {e}. Trying JSON fallback..."
                        f"Using config.py data: {len(MARKET_CAP_LOOKUP)} coins loaded.")
 
 
 # -------------------------------------- APP SETUP ----------------------------------------------
 async def lifespan(app: FastAPI):
     # startup
-    logger.info("PerpScope API starting up...")
+    log_info("PerpScope API starting up...")
     load_market_cap_data()
-    logger.info("Startup complete!")
+    log_info("Startup complete!")
 
     yield
 
     # shutdown
-    logger.info("Cleaning up...")
+    log_info("Cleaning up...")
 
 
 app = FastAPI(
@@ -243,7 +234,7 @@ async def get_opportunities(
             funding_lookup[row['symbol']] = float(row['funding_rate'])
 
     except Exception as e:
-        logger.warning(f"Could not fetch funding rates: {str(e)}")
+        log_warn(f"Could not fetch funding rates: {str(e)}")
 
     # Fetch latest perp + spot price for every coin
     sql = """
@@ -423,7 +414,7 @@ async def get_coin_detail(symbol):
                 pct_time_opportunity = above_threshold / len(rho_values)
 
     except Exception as e:
-        logger.warning(f"Could not calculate 90d stats for {symbol}: {e}")
+        log_warn(f"Could not calculate 90d stats for {symbol}: {e}")
     
 
     perp_price = float(row['perp_price'])
@@ -812,7 +803,7 @@ async def trigger_funding_update(
     """
     verify_cron_secret(key)
     background_tasks.add_task(run_funding_rates_update)
-    logger.info("Funding rate update triggered by cron-job")
+    log_info("Funding rate update triggered by cron-job")
 
     return {
         "status":   "accepted",
@@ -832,7 +823,7 @@ async def trigger_price_update(
     """
     verify_cron_secret(key)
     background_tasks.add_task(run_price_update)
-    logger.info("Perp and spot prices updates triggered by cron-job")
+    log_info("Perp and spot prices updates triggered by cron-job")
 
     return {
         "status":   "accepted",
@@ -1042,7 +1033,7 @@ async def create_alert(body: dict = Body(...),
                        user=Depends(get_current_user_db_id)
 ):
     """This function creates a new alert for the current user."""
-    logger.info(f"Alert creation body: {body}")
+    log_info(f"Alert creation body: {body}")
 
     symbol = body.get('symbol') or None
     
@@ -1180,7 +1171,7 @@ async def telegram_webhook(request: Request):
             f"your watched coins."
         )
         send_message(str(chat_id), reply_text)
-        logger.info(f"Sent chat_id to @{username} ({chat_id})")
+        log_info(f"Sent chat_id to @{username} ({chat_id})")
 
     elif '/stop' in text:
         reply_text = (
@@ -1189,7 +1180,7 @@ async def telegram_webhook(request: Request):
             f"Send /start to resume."
         )
         send_message(str(chat_id), reply_text)
-        logger.info(f"Paused alerts for @{username}")
+        log_info(f"Paused alerts for @{username}")
 
     return {"ok": True}
 
