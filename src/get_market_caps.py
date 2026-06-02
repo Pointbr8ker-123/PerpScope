@@ -6,7 +6,7 @@ import time
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import REQUEST_TIMEOUT, COINGECKO_BASE_URL
-from utils import log
+from utils import log_info, log_warn, log_err
 
 
 def fetch_coingecko_page(page, per_page=250):
@@ -27,18 +27,18 @@ def fetch_coingecko_page(page, per_page=250):
         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
 
         if response.status_code == 429:
-            log(f"Rate limited on page {page}. Waiting 60 seconds...")
+            log_info(f"Rate limited on page {page}. Waiting 60 seconds...")
             time.sleep(60)
             return fetch_coingecko_page(page, per_page)
         
         if response.status_code != 200:
-            log(f"Error on page {page}: status {response.status_code}")
+            log_err(f"Error on page {page}: status {response.status_code}")
             return []
         
         return response.json()
     
     except Exception as e:
-        log(f"Request failed on page {page}: {e}")
+        log_warn(f"Request failed on page {page}: {e}")
         return []
 
 
@@ -52,56 +52,18 @@ def fetch_all_rankings(max_coins=5000):
     all_coins = []
 
     for page in range(1, pages + 1):
-        log(f"Fetching CoinGecko page {page}/{pages}...")
+        log_info(f"Fetching CoinGecko page {page}/{pages}...")
         coins = fetch_coingecko_page(page, per_page)
 
         if not coins:
-            log(f"No data returned for page {page}, stopping...")
+            log_warn(f"No data returned for page {page}, stopping...")
             break
 
         all_coins.extend(coins)
         time.sleep(6)
 
-    log(f"Fetched {len(all_coins)} coins from CoinGecko")
+    log_info(f"Fetched {len(all_coins)} coins from CoinGecko")
     return all_coins
-
-
-# def fetch_launch_time_ms(coingecko_id):
-#     """
-#     This function fetches the genesis/launch date for a particular coin
-#     and returns it as a date string or string 0 if unavailable
-#     """
-#     url = f"{COINGECKO_BASE_URL}/{coingecko_id}"
-#     params = {
-#         "localization": False,
-#         "tickers": False,
-#         "market_data": False,
-#         "community_data": False,
-#         "developer_data": False,
-#     }
-    
-#     try:
-#         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
-
-#         if response.status_code == 429:
-#             log(f"Rate limitied fetching {coingecko_id}. Waiting 60s...")
-#             time.sleep(60)
-#             return fetch_launch_time_ms(coingecko_id)
-        
-#         if response.status_code != 200:
-#             return None
-        
-#         data = response.json()
-#         genesis_date = data.get("genesis_date")
-
-#         if not genesis_date:
-#             return None
-        
-#         return genesis_date
-    
-#     except Exception as e:
-#         log(f"Failed to fetch launch time for {coingecko_id}: {e}")
-#         return None
 
 
 def build_ranking_lookup(coingecko_coins):
@@ -221,53 +183,53 @@ def run_classification():
         universe = json.load(f)
 
     product_universe = universe['product_universe']
-    log(f"Product universe has {len(product_universe)} coins to classify")
+    log_info(f"Product universe has {len(product_universe)} coins to classify")
 
     # Fetching market cap rankings from CoinGecko
-    log(f"Fetching market cap rankings from CoinGecko...")
+    log_info(f"Fetching market cap rankings from CoinGecko...")
     coingecko_coins = fetch_all_rankings(max_coins=5000)
 
     # Building the symbol matching lookup
-    log(f"\nBuilding symbol matching lookup...")
+    log_info(f"\nBuilding symbol matching lookup...")
     lookup = build_ranking_lookup(coingecko_coins)
-    log(f"Lookup covers {len(lookup)} Bybit-compatible coins.")
+    log_info(f"Lookup covers {len(lookup)} Bybit-compatible coins.")
 
     # Classifying the Product universe coins
-    log("\nClassifying research universe by market cap...")
+    log_info("\nClassifying research universe by market cap...")
     large, mid, small, unmatched = classify_by_market_cap(
         lookup, product_universe
     )
 
     # matched_symbols = [s for s in product_universe if s in lookup]
-    # log(f"Fetching launch times for {len(matched_symbols)} matched coins...")
+    # log_info(f"Fetching launch times for {len(matched_symbols)} matched coins...")
 
     # for i, symbol in enumerate(matched_symbols):
     #     cg_id = lookup[symbol]['coingecko_id']
     #     launch_ms = fetch_launch_time_ms(cg_id)
     #     lookup[symbol]['launch_time_ms'] = launch_ms
-    #     log(f"[{i+1}/{len(matched_symbols)}] {symbol}: {launch_ms}")
+    #     log_info(f"[{i+1}/{len(matched_symbols)}] {symbol}: {launch_ms}")
     #     time.sleep(2)
     
     # Save results
     save_market_cap_classification(lookup, large, mid, small, unmatched)
     
-    # log summary
-    log("\n" + "="*50)
-    log("CLASSIFICATION RESULTS")
-    log("="*50)
-    log(f"Large cap  (rank 1-20):   {len(large)} coins")
+    # log_info summary
+    log_info("\n" + "="*50)
+    log_info("CLASSIFICATION RESULTS")
+    log_info("="*50)
+    log_info(f"Large cap  (rank 1-20):   {len(large)} coins")
     for s in large:
-        log(f"    {s:<15} rank {lookup[s]['rank']}")
+        log_info(f"    {s:<15} rank {lookup[s]['rank']}")
     
-    log(f"\nMid cap    (rank 21-100): {len(mid)} coins")
-    log(f"Small cap  (rank 101+):   {len(small)} coins")
+    log_info(f"\nMid cap    (rank 21-100): {len(mid)} coins")
+    log_info(f"Small cap  (rank 101+):   {len(small)} coins")
     
     if unmatched:
-        log(f"\nUnmatched coins ({len(unmatched)}) — review manually:")
+        log_info(f"\nUnmatched coins ({len(unmatched)}) — review manually:")
         for s in unmatched:
-            log(f"    {s}")
+            log_info(f"    {s}")
     
-    log(f"\nSaved to market_cap_classification.json")
+    log_info(f"\nSaved to market_cap_classification.json")
 
 
 if __name__ == "__main__":

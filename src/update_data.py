@@ -1,3 +1,5 @@
+import requests
+import psycopg2.extras
 import os
 import sys
 import time
@@ -5,18 +7,25 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import ALL_COINS, SLEEP_BETWEEN_CALLS
+from config import ALL_COINS, BASE_URL, REQUEST_TIMEOUT, SLEEP_BETWEEN_CALLS
 from collect_historical import fetch_funding_rates_page, fetch_klines_page
 from calculate_rho import calculate_current_opportunities
-from backend.database.timescale import get_connection
 from telegram_alerts import check_and_send_alerts
-from utils import log, now_ms
+from utils import log_info, log_warn, log_err, now_ms, date_to_ms
+
+from backend.database.timescale import (
+    create_pool,
+    close_pool,
+    get_connection, 
+    get_pooled_connection,
+)
 
 
 # Due to timescaledb free tier restrictions (750MB), there has to be a 
 # limit to how many days of data for each coin to keep in the database.
-# Older roww than the limit are deleted after each update runs thereby
-# preventing the timescaledb 750MB free tier from filling up.
+
+# Older rows than the limit are deleted after each update runs thereby
+# preventing the timescaledb (750MB) free tier from filling up.
 
 RETENTION_DAYS = 90
 
@@ -32,7 +41,7 @@ def get_last_timestamp_from_db(symbol, table):
     """
 
     try:
-        with get_connection() as conn:
+        with get_pooled_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, (symbol,))
                 result = cur.fetchone()
@@ -41,7 +50,7 @@ def get_last_timestamp_from_db(symbol, table):
             return int(result['max']) + 1
         
     except Exception as e:
-        log(f"[{symbol}] could not read last timestamp from {table}: {e}")
+        log_err(f"[{symbol}] could not read last timestamp from {table}: {e}")
 
     ninety_days_ms = RETENTION_DAYS * 24 * 60 * 60 * 1000
     return now_ms() - ninety_days_ms
@@ -61,7 +70,7 @@ def cleanup_old_data():
         WHERE timestamp < NOW() - INTERVAL '{days} days'
     """
 
-    log(f"Running data cleanup...")
+    log_info(f"Running data cleanup...")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -72,9 +81,9 @@ def cleanup_old_data():
                     )
                     deleted = cur.rowcount
                     if deleted > 0:
-                        log(f"Cleaned {deleted:,} old rows from {table}")
+                        log_info(f"Cleaned {deleted:,} old rows from {table}")
                 except Exception as e:
-                    log(f"Cleanup error on {table}: {e}")
+                    log_err(f"Cleanup error on {table}: {e}")
         conn.commit()
 
 
@@ -124,7 +133,7 @@ def update_funding_rates(symbol):
             rate = float(record['fundingRate'])
             rows.append((symbol, ts_ms, ts, rate))
         except (KeyError, ValueError) as e:
-            log(f"[{symbol}] Bad funding record: {e}")
+            log_err(f"[{symbol}] Bad funding record: {e}")
 
     if not rows:
         return 0
@@ -176,7 +185,7 @@ def update_prices(symbol, category):
             volume  = float(record[5])
             rows.append((symbol, ts_ms, ts, open_, high, low, close, volume))
         except (IndexError, ValueError) as e:
-            log(f"[{symbol}] Bad kline record: {e}")
+            log_err(f"[{symbol}] Bad kline record: {e}")
 
     if not rows:
         return 0
@@ -208,7 +217,7 @@ def update_coin_funding_rates(symbol):
         time.sleep(SLEEP_BETWEEN_CALLS)
         return (symbol, n_f, True)
     except Exception as e:
-        log(f"[{symbol}] Funding rates update failed...")
+        log_err(f"[{symbol}] Funding rates update failed...")
         return (symbol, 0, False)
     
 
@@ -224,7 +233,7 @@ def update_coin_prices(symbol):
         time.sleep(SLEEP_BETWEEN_CALLS)
         return (symbol, n_p, n_s, True)
     except Exception as e:
-        log(f"[{symbol}] Price update failed: {e}")
+        log_err(f"[{symbol}] Price update failed: {e}")
         return (symbol, 0, 0, False)
     
 
@@ -237,10 +246,10 @@ def run_price_update(max_workers=5):
     after updating.
     """
     start_time = datetime.now()
-    log(f"\n{'='*60}")
-    log("PRICE UPDATE STARTED")
-    log(f"Coins: {len(ALL_COINS)} | Workers: {max_workers}")
-    log(f"\n{'='*60}")
+    log_info(f"\n{'='*60}")
+    log_info("PRICE UPDATE STARTED")
+    log_info(f"Coins: {len(ALL_COINS)} | Workers: {max_workers}")
+    log_info(f"\n{'='*60}")
 
     total_perp = 0
     total_spot = 0
@@ -257,7 +266,7 @@ def run_price_update(max_workers=5):
 
             if success:
                 if n_p > 0 or n_s > 0:
-                    log(f"{symbol}: +{n_p} perp, +{n_s} spot")
+                    log_info(f"{symbol}: +{n_p} perp, +{n_s} spot")
                 total_perp += n_p
                 total_spot += n_s
             else:
@@ -271,24 +280,24 @@ def run_price_update(max_workers=5):
         if not opps_df.empty:
             opps_list = opps_df.to_dict('records')
             alerts_sent = check_and_send_alerts(opps_list)
-            log(f"Alert engine: {alerts_sent} alerts sent")
+            log_info(f"Alert engine: {alerts_sent} alerts sent")
 
     except Exception as e:
-        log(f"Alert engine error: {e}")
+        log_err(f"Alert engine error: {e}")
 
     db_size = get_database_size()
     duration = (datetime.now() - start_time).seconds
 
-    log(f"\nPrice update complete in {duration}s")
-    log(f"New row: {total_perp:,} perp | {total_spot:,} spot")
-    log(f"Database size: {db_size:.1f} MB / 750MB")
+    log_info(f"\nPrice update complete in {duration}s")
+    log_info(f"New row: {total_perp:,} perp | {total_spot:,} spot")
+    log_info(f"Database size: {db_size:.1f} MB / 750MB")
 
     if failed:
-        log(f"Failed coins ({len(failed)}): {failed[:10]}")
+        log_warn(f"Failed coins ({len(failed)}): {failed[:10]}")
 
     if db_size > 400:
-        log(f"WARNING: Database is {db_size:.0f}MB - approaching 750MB limit!")
-        log(f"Consider reducing RETENTION_DAYS from {RETENTION_DAYS} to {RETENTION_DAYS/1.5}")
+        log_warn(f"WARNING: Database is {db_size:.0f}MB - approaching 750MB limit!")
+        log_warn(f"Consider reducing RETENTION_DAYS from {RETENTION_DAYS} to {RETENTION_DAYS/1.5}")
 
 
 # --------------------------Pipeline 2: 8-hour Funding Rates Update ---------------------------------
@@ -300,10 +309,10 @@ def run_funding_rates_update(max_workers=5):
     Updates funding rates for all coins.
     """
     start_time = datetime.now()
-    log(f"\n{'='*60}")
-    log("FUNDING RATES UPDATE STARTED")
-    log(f"Coins: {len(ALL_COINS)} | Workers: {max_workers}")
-    log(f"\n{'='*60}")
+    log_info(f"\n{'='*60}")
+    log_info("FUNDING RATES UPDATE STARTED")
+    log_info(f"Coins: {len(ALL_COINS)} | Workers: {max_workers}")
+    log_info(f"\n{'='*60}")
 
     total_funding = 0
     failed = []
@@ -319,7 +328,7 @@ def run_funding_rates_update(max_workers=5):
 
             if success:
                 if n_f > 0:
-                    log(f"{symbol}: +{n_f} rate")
+                    log_info(f"{symbol}: +{n_f} rate")
                 total_funding += n_f
             else:
                 failed.append(symbol)
@@ -329,12 +338,12 @@ def run_funding_rates_update(max_workers=5):
     db_size = get_database_size()
     duration = (datetime.now() - start_time).seconds
 
-    log(f"\nFunding update complete in {duration}s")
-    log(f"New rows: {total_funding:,} funding rates")
-    log(f"Database size: {db_size:.1f}MB / 750MB")
+    log_info(f"\nFunding update complete in {duration}s")
+    log_info(f"New rows: {total_funding:,} funding rates")
+    log_info(f"Database size: {db_size:.1f}MB / 750MB")
 
     if failed:
-        log(f"Failed coins ({len(failed)}): {failed[:10]}...")
+        log_warn(f"Failed coins ({len(failed)}): {failed[:10]}...")
 
 
 if __name__ == "__main__":

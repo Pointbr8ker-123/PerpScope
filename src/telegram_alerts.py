@@ -3,6 +3,7 @@ import logging
 import requests
 from datetime import datetime, timezone
 from backend.database.supabase import get_supabase_connection
+from utils import log_info, log_warn, log_err
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def send_message(chat_id, text):
     Returns True if successful, and False if failed.
     """
     if not TELEGRAM_TOKEN:
-        logger.warning("TELEGRAM_BOT_TOKEN not set")
+        log_warn("TELEGRAM_BOT_TOKEN not set")
         return False
     
     url  = f"{TELEGRAM_API}/sendMessage"
@@ -37,13 +38,13 @@ def send_message(chat_id, text):
 
         if not result.get('ok'):
             error = result.get('description', 'unknown error')
-            logger.warning(f"Telegram send failed for {chat_id}: {error}")
+            log_err(f"Telegram send failed for {chat_id}: {error}")
             return False
         
         return True
     
     except Exception as e:
-        logger.error(f"Telegram request failed: {e}")
+        log_err(f"Telegram request failed: {e}")
         return False
     
 
@@ -374,11 +375,11 @@ def check_and_send_alerts(opportuinities):
             sent = process_coin_alert(coin)
             total_alerts += sent
         except Exception as e:
-            logger.error(f"Alert processing failed for {coin.get('symbol')}: {e}")
+            log_err(f"Alert processing failed for {coin.get('symbol')}: {e}")
             continue
 
     if total_alerts > 0:
-        logger.info(f"Sent {total_alerts} Telegram alerts")
+        log_info(f"Sent {total_alerts} Telegram alerts")
 
     return total_alerts
 

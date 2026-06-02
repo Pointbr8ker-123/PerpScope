@@ -17,7 +17,7 @@ from config import (
     HISTORY_START_YEAR, create_data_dir,
     get_funding_path, get_perp_path, get_spot_path
 )
-from utils import date_to_ms, now_ms, log
+from utils import date_to_ms, now_ms, log_info, log_warn, log_err
 
 
 # ----------------------FUNDING RATE--------------------------------------------
@@ -40,30 +40,30 @@ def fetch_funding_rates_page(symbol, start_ms, end_ms, limit=200):
         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
 
         if response.status_code != 200:
-            log(f"[{symbol}] HTTP {response.status_code} for funding_rates")
+            log_info(f"[{symbol}] HTTP {response.status_code} for funding_rates")
             return None
         
         content = response.text.strip()
         if not content or content[0] not in ('{', '['):
-            log(f"[{symbol}] Non-JSON response for funding_rates"
+            log_warn(f"[{symbol}] Non-JSON response for funding_rates"
                 f"{content[:100]}")
             return None
         
         data = response.json()
 
         if data['retCode'] != 0:
-            log(f"API Error for {symbol} funding: {data['retMsg']}")
+            log_err(f"API Error for {symbol} funding: {data['retMsg']}")
 
         return data['result']['list']
     
     except requests.exceptions.Timeout:
-        log(f"[{symbol}] Timeout for funding_rates")
+        log_warn(f"[{symbol}] Timeout for funding_rates")
         return None
     except requests.exceptions.ConnectionError:
-        log(f" {symbol}] Connection error for funding_rates")
+        log_err(f" {symbol}] Connection error for funding_rates")
         return None
     except Exception as e:
-        log(f"[{symbol}] Request Error for funding_rates: {e}")
+        log_err(f"[{symbol}] Request Error for funding_rates: {e}")
         return None
     
 
@@ -111,7 +111,7 @@ def collect_funding_rates(symbol, start_ms=None):
         time.sleep(SLEEP_BETWEEN_CALLS)
 
     if not all_records:
-        log(f"No funding rate data found for {symbol}")
+        log_warn(f"No funding rate data found for {symbol}")
         return 0
     
     # Convert all_records to a pandas dataframe
@@ -161,31 +161,31 @@ def fetch_klines_page(symbol, category, start_ms, end_ms, interval=60, limit=200
         response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
 
         if response.status_code != 200:
-            log(f"[{symbol}] HTTP {response.status_code} for {category} klines")
+            log_warn(f"[{symbol}] HTTP {response.status_code} for {category} klines")
             return None
         
         content = response.text.strip()
         if not content or content[0] not in ('{', '['):
-            log(f"[{symbol}] Non-JSON response for {category} klines:"
+            log_warn(f"[{symbol}] Non-JSON response for {category} klines:"
                 f"{content[:100]}")
             return None
         
         data = response.json()
 
         if data['retCode'] != 0:
-            log(f"API Error for {symbol} klines: {data['retMsg']}")
+            log_err(f"API Error for {symbol} klines: {data['retMsg']}")
             return None
 
         return data['result']['list']
 
     except requests.exceptions.Timeout:
-        log(f"[{symbol}] Timeout for {category} klines")
+        log_warn(f"[{symbol}] Timeout for {category} klines")
         return None
     except requests.exceptions.ConnectionError:
-        log(f"[{symbol}] Connection error for {category} klines")
+        log_err(f"[{symbol}] Connection error for {category} klines")
         return None
     except Exception as e:
-        log(f"[{symbol}] Request Error for {category} klines: {e}")
+        log_err(f"[{symbol}] Request Error for {category} klines: {e}")
         return None
 
 
@@ -230,7 +230,7 @@ def collect_klines(symbol, category, start_ms=None):
         time.sleep(SLEEP_BETWEEN_CALLS)
 
     if not all_records:
-        log(f"No {category} kline history data found for {symbol}")
+        log_err(f"No {category} kline history data found for {symbol}")
         return 0
     
     df = pd.DataFrame(all_records, columns=[
@@ -302,14 +302,14 @@ def collect_single_coin(symbol):
         total = n_s + n_p
 
         if total == 0:
-            log(f"WARNING: No data collected for [{symbol}]")
+            log_warn(f"WARNING: No data collected for [{symbol}]")
             return(symbol, False, 0) 
         
-        log(f"Successfully collected data for [{symbol}]")
+        log_info(f"Successfully collected data for [{symbol}]")
         return (symbol, True, total)
     
     except Exception as e:
-        log(f"Failure to collect data for [{symbol}]: {e}")
+        log_err(f"Failure to collect data for [{symbol}]: {e}")
         return(symbol, False, 0) 
 
 
@@ -327,11 +327,11 @@ def collect_all_historical_data(max_workers=1):
     # skip already downloaded coins
     remaining = [c for c in PRODUCT_UNIVERSE if c not in completed]
 
-    log(f"Starting Historical collection...")
-    log(f"Total coins: {len(PRODUCT_UNIVERSE)}")
-    log(f"Already done: {len(completed)}")
-    log(f"Remaining: {len(remaining)}")
-    log("=" * 60)
+    log_info(f"Starting Historical collection...")
+    log_info(f"Total coins: {len(PRODUCT_UNIVERSE)}")
+    log_info(f"Already done: {len(completed)}")
+    log_info(f"Remaining: {len(remaining)}")
+    log_info("=" * 60)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_symbol = {
@@ -352,24 +352,24 @@ def collect_all_historical_data(max_workers=1):
                         done_count = len(completed)
                         total_count = len(PRODUCT_UNIVERSE)
                         pct = (done_count / total_count) * 100
-                        log(f"✅ {symbol} | {records:,} records | "
+                        log_info(f"✅ {symbol} | {records:,} records | "
                             f"{done_count}/{total_count} ({pct:.1f}%)")
                     else:
                         failed.add(symbol)
                         progress['failed'] = list(failed)
-                        log(f"❌ {symbol} | FAILED")
+                        log_warn(f"❌ {symbol} | FAILED")
 
                     save_progress(progress)
 
             except Exception as e:
-                log(f"❌ {symbol} | Exception: {e}")
+                log_warn(f"❌ {symbol} | Exception: {e}")
 
-    log("\n" + "=" * 60)
-    log(f"Collection complete!")
-    log(f"Successful: {len(completed)}")
-    log(f"Failed: {len(failed)}")
+    log_info("\n" + "=" * 60)
+    log_info(f"Collection complete!")
+    log_info(f"Successful: {len(completed)}")
+    log_warn(f"Failed: {len(failed)}")
     if failed:
-        log(f"Failed coins: {failed}")
+        log_warn(f"Failed coins: {failed}")
 
 
 if __name__ == "__main__":

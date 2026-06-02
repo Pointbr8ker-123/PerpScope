@@ -28,7 +28,7 @@ from calculate_rho import (
     THRESHOLDS,
     KAPPA, IOTA, GAMMA, RISK_FREE_RATE_8HR, PERIODS_PER_YEAR
 )
-from utils import log_info, log_warn
+from utils import log_info, log_warn, log_err
 from calculate_funding import annualize_funding_rate, get_funding_signal
 from update_data import run_price_update, run_funding_rates_update
 from database.db_config import SUPABASE_URL, SUPABASE_JWKS_URL
@@ -234,7 +234,7 @@ async def get_opportunities(
             funding_lookup[row['symbol']] = float(row['funding_rate'])
 
     except Exception as e:
-        log_warn(f"Could not fetch funding rates: {str(e)}")
+        log_err(f"Could not fetch funding rates: {str(e)}")
 
     # Fetch latest perp + spot price for every coin
     sql = """
@@ -414,7 +414,7 @@ async def get_coin_detail(symbol):
                 pct_time_opportunity = above_threshold / len(rho_values)
 
     except Exception as e:
-        log_warn(f"Could not calculate 90d stats for {symbol}: {e}")
+        log_err(f"Could not calculate 90d stats for {symbol}: {e}")
     
 
     perp_price = float(row['perp_price'])
