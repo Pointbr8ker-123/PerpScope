@@ -9,18 +9,15 @@ sys.path.insert(0, PROJECT_ROOT)
 from backend.database.db_config import TIMESCALE_DATABASE_URL
 from backend.database.supabase import get_supabase_connection
 from src.config import BASE_DIR, DATA_DIR, ALL_COINS
-from src.utils import log, now_ms
+from src.utils import log_info, log_err, log_warn, now_ms
 
 import psycopg2
 import psycopg2.extras
-import logging
 import threading
 from contextlib import contextmanager
 from psycopg2.pool import ThreadedConnectionPool
 from psycopg2.extras import RealDictCursor, execute_values
 
-
-logger = logging.getLogger(__name__)
 
 _pool      = None
 _pool_lock = threading.Lock()
@@ -36,7 +33,7 @@ def create_pool(min_connections=2, max_connections=5):
 
     with _pool_lock:
         if _pool is not None:
-            logger.warning("Pool already exists - skipping creation")
+            log_warn("Pool already exists - skipping creation")
             return
         
         _pool = ThreadedConnectionPool(
@@ -45,7 +42,7 @@ def create_pool(min_connections=2, max_connections=5):
             dsn=TIMESCALE_DATABASE_URL,
             cursor_factory=RealDictCursor
         )
-        logger.info(
+        log_info(
             f"Connection pool created "
             f"(min={min_connections}, max={max_connections})"
         )
@@ -64,7 +61,7 @@ def close_pool():
             return
         _pool.closeall()
         _pool = None
-        logger.info("Connection pool closed")
+        log_info("Connection pool closed")
 
 
 @contextmanager
@@ -403,23 +400,23 @@ def create_timescale_tables():
         ),
     ]
 
-    log("Setting up TimescaleDB tables...")
+    log_info("Setting up TimescaleDB tables...")
 
     with get_connection() as conn:
         with conn.cursor() as cur:
             for name, sql in statements:
                 try:
-                    log(f"{name}...")
+                    log_info(f"{name}...")
                     cur.execute(sql)
                     if conn.notices:
                         for notice in conn.notices:
-                            log(f"  Notice: {notice}")
+                            log_info(f"  Notice: {notice}")
                 except Exception as e:
-                    log(f"ERROR on '{name}': {e}")
+                    log_err(f"ERROR on '{name}': {e}")
                     raise
         conn.commit()
 
-    log(f"\nTimescaleDB Setup complete... All tables created successfully!!!")
+    log_info(f"\nTimescaleDB Setup complete... All tables created successfully!!!")
 
 def populate_coin_universe_table(coins):
     """
@@ -493,7 +490,7 @@ def seed_coin_universe_table_from_json(json_path=None):
             })
 
     inserted = populate_coin_universe_table(coins)
-    log(f"Upserted {inserted} coins into coin_universe database table")
+    log_info(f"Upserted {inserted} coins into coin_universe database table")
     return inserted
 
 
@@ -528,7 +525,7 @@ def insert_funding_rates(days=90):
     already_loaded = get_already_loaded_symbols('funding_rates')
     remaining = [s for s in ALL_COINS if s not in already_loaded]
 
-    log(f"Loading last {days} days of historical funding rates for {len(remaining)} coins...")
+    log_info(f"Loading last {days} days of historical funding rates for {len(remaining)} coins...")
 
     total_inserted = 0
     missing = []
@@ -537,7 +534,7 @@ def insert_funding_rates(days=90):
         csv_path = os.path.join(DATA_DIR, symbol, f"{symbol}_funding_rates.csv")
 
         if not os.path.exists(csv_path):
-            log(f"WARNING: No funding rates CSV found for {symbol}, skipping...")
+            log_warn(f"WARNING: No funding rates CSV found for {symbol}, skipping...")
             missing.append(symbol)
             continue
 
@@ -547,7 +544,7 @@ def insert_funding_rates(days=90):
             df = df[df['timestamp_ms'] >= cutoff_ms]
 
             if df.empty:
-                log(f"{symbol}: no data in last {days} days, skipping...")
+                log_warn(f"{symbol}: no data in last {days} days, skipping...")
                 continue
 
             rows = [
@@ -574,16 +571,16 @@ def insert_funding_rates(days=90):
                 conn.commit()
 
             total_inserted += len(rows)
-            log(f"{symbol}: inserted {len(rows)} rows")
+            log_info(f"{symbol}: inserted {len(rows)} rows")
 
         except Exception as e:
-            log(f"ERROR on {symbol}: {e}")
+            log_err(f"ERROR on {symbol}: {e}")
             missing.append(symbol)
 
-    log(f"\nDone. Total rows inserted: {total_inserted}")
+    log_info(f"\nDone. Total rows inserted: {total_inserted}")
 
     if missing:
-        log(f"Missing or failed CSVs for {len(missing)} coins: {missing}")
+        log_warn(f"Missing or failed CSVs for {len(missing)} coins: {missing}")
 
     return total_inserted
 
@@ -597,7 +594,7 @@ def insert_prices(price_type, database_table, csv_suffix, days=30):
     already_loaded = get_already_loaded_symbols(database_table)
     remaining = [s for s in ALL_COINS if s not in already_loaded]
 
-    log(f"Loading last {days} days of {price_type} prices for {len(remaining)} coins")
+    log_info(f"Loading last {days} days of {price_type} prices for {len(remaining)} coins")
 
     total_inserted = 0
     missing = []
@@ -625,7 +622,7 @@ def insert_prices(price_type, database_table, csv_suffix, days=30):
             df = df[df['timestamp_ms'] >= cutoff_ms]
 
             if df.empty:
-                log(f"  {symbol}: no data in last {days} days, skipping")
+                log_warn(f"  {symbol}: no data in last {days} days, skipping")
                 continue
 
             rows = [
@@ -653,16 +650,16 @@ def insert_prices(price_type, database_table, csv_suffix, days=30):
                 symbol_inserted += len(chunk)
 
             total_inserted += symbol_inserted
-            log(f"  {symbol}: inserted {symbol_inserted:,} rows "
+            log_info(f"  {symbol}: inserted {symbol_inserted:,} rows "
                 f"({len(rows)//CHUNK_SIZE + 1} chunks)")
 
         except Exception as e:
-            log(f"  {symbol}: ERROR — {e}")
+            log_err(f"  {symbol}: ERROR — {e}")
             missing.append(symbol)
 
-    log(f"\nDone. Total inserted: {total_inserted:,}")
+    log_info(f"\nDone. Total inserted: {total_inserted:,}")
     if missing:
-        log(f"Missing/failed: {missing}")
+        log_warn(f"Missing/failed: {missing}")
 
     return total_inserted
 
@@ -697,7 +694,7 @@ def migrate_tables(source_table, dest_table, columns, use_time_filter=True):
     """
     This function migrates the timeseries data from supabase to TimescaleDB
     """
-    log(f"\nMigrating {source_table} -> {dest_table}")
+    log_info(f"\nMigrating {source_table} -> {dest_table}")
 
     col_str = ', '.join(columns)
 
@@ -721,10 +718,10 @@ def migrate_tables(source_table, dest_table, columns, use_time_filter=True):
             rows = cur.fetchall()
 
     if not rows:
-        log(f"No data in {source_table} for the last {RETENTION_DAYS} days")
+        log_warn(f"No data in {source_table} for the last {RETENTION_DAYS} days")
         return 0
     
-    log(f"Read {len(rows):,} rows from Supabase")
+    log_info(f"Read {len(rows):,} rows from Supabase")
 
     data = [
         tuple(row[col] for col in columns)
@@ -758,13 +755,13 @@ def migrate_tables(source_table, dest_table, columns, use_time_filter=True):
                 )
         conn.commit()
 
-    log(f"Inserted {len(data):,} rows into TimescaleDB")
+    log_info(f"Inserted {len(data):,} rows into TimescaleDB")
     return len(data)
 
 
 def run_migration():
-    log(f"Migrating last {RETENTION_DAYS} days to TimescaleDB")
-    log("="*60)
+    log_info(f"Migrating last {RETENTION_DAYS} days to TimescaleDB")
+    log_info("="*60)
 
     coin_universe_cols = ['symbol', 'name', 'coingecko_id', 'market_cap',
                           'market_cap_rank', 'market_cap_tier', 'has_spot_market',

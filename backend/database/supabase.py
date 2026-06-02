@@ -7,7 +7,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 sys.path.insert(0, PROJECT_ROOT)
 
 from backend.database.db_config import SUPABASE_DATABASE_URL
-from src.utils import log
+from src.utils import log_info, log_err
 
 def get_supabase_connection():
     """
@@ -116,14 +116,14 @@ def create_supabase_tables():
         with conn.cursor() as cur:
             for name, sql in statements:
                 try:
-                    log(f"Creating {name}...")
+                    log_info(f"Creating {name}...")
                     cur.execute(sql)
                 except Exception as e:
-                    log(f"Error on {name}: {e}")
+                    log_err(f"Error on {name}: {e}")
                     raise
         conn.commit()
 
-    log(f"\nAll Supabase Tables Created Successfully!!!")
+    log_info(f"\nAll Supabase Tables Created Successfully!!!")
 
 
 def alter_table(table_name, old_column_name, new_column_name):
@@ -136,7 +136,7 @@ def alter_table(table_name, old_column_name, new_column_name):
             cur.execute(sql)
         conn.commit()
 
-    log(f"Successfully changed the column name in {table_name} database table")
+    log_info(f"Successfully changed the column name in {table_name} database table")
 
 
 def add_column(table_name, column_name, data_type):
@@ -149,7 +149,7 @@ def add_column(table_name, column_name, data_type):
             cur.execute(sql)
         conn.commit()
 
-    log(f"Successfully added the column '{column_name}' to the {table_name} database table")
+    log_info(f"Successfully added the column '{column_name}' to the {table_name} database table")
 
 
 if __name__ == "__main__":
