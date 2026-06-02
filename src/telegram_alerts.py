@@ -3,7 +3,7 @@ import logging
 import requests
 from datetime import datetime, timezone
 from backend.database.supabase import get_supabase_connection
-from utils import log_info, log_warn, log_err
+from src.utils import log_info, log_warn, log_err
 
 logger = logging.getLogger(__name__)
 
