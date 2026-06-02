@@ -28,6 +28,11 @@ from backend.database.timescale import (
 # preventing the timescaledb (750MB) free tier from filling up.
 
 RETENTION_DAYS = 90
+BATCH_SIZE     = 50     # insert this many rows per database commit
+MAX_WORKERS    = 5      # max number of Bybit API workers
+POOL_MIN       = 2      # minimum pool connections
+POOL_MAX       = 5      # maximum pool connections
+
 
 def get_last_timestamp_from_db(symbol, table):
     """
@@ -107,71 +112,79 @@ def get_database_size():
         return 0.0
     
 
-def update_funding_rates(symbol):
+def fetch_new_funding_rates(symbol):
     """
     This function fetches funding rate records for a coin since the last
     stores timestamp and inserts them to the database
     """
     start_ms = get_last_timestamp_from_db(symbol, 'funding_rates')
-    end_ms = now_ms()
+    end_ms   = now_ms()
 
     if start_ms >= end_ms:
-        return 0
+        return []
     
     records = fetch_funding_rates_page(
         symbol, start_ms, end_ms, limit=10
     )
 
     if not records:
-        return 0
+        return []
     
     rows = []
     for record in records:
         try:
             ts_ms = int(record['fundingRateTimestamp'])
-            ts = datetime.fromtimestamp(ts_ms/1000, tz=timezone.utc)
-            rate = float(record['fundingRate'])
+            ts    = datetime.fromtimestamp(ts_ms/1000, tz=timezone.utc)
+            rate  = float(record['fundingRate'])
             rows.append((symbol, ts_ms, ts, rate))
         except (KeyError, ValueError) as e:
             log_err(f"[{symbol}] Bad funding record: {e}")
+            continue
 
+    return rows
+
+
+def batch_insert_funding_rates(rows):
+    """
+    This function inserts a batch of funding rate rows in a single database 
+    commit and returns the number of rows inserted
+    """
     if not rows:
         return 0
     
     sql = """
         INSERT INTO funding_rates
             (symbol, timestamp_ms, timestamp, funding_rate)
-        VALUES
-            (%s, %s, %s, %s)
+        VALUES %s
         ON CONFLICT (symbol, timestamp_ms, timestamp) DO NOTHING
     """
 
-    with get_connection() as conn:
+    with get_pooled_connection() as conn:
         with conn.cursor() as cur:
-            cur.executemany(sql, rows)
+            psycopg2.extras.execute_values(cur, sql, rows, page_size=BATCH_SIZE)
         conn.commit()
 
     return len(rows)
 
 
-def update_prices(symbol, category):
+def fetch_new_prices(symbol, category):
     """
     This function fetches new hourly OHLCV candles for a coin since
-    the last
+    the last timestamp_ms in the database
     """
-    table = 'perp_prices' if category == 'linear' else 'spot_prices'
+    table    = 'perp_prices' if category == 'linear' else 'spot_prices'
     start_ms = get_last_timestamp_from_db(symbol, table)
-    end_ms = now_ms()
+    end_ms   = now_ms()
 
     if start_ms >= end_ms:
-        return 0
+        return []
     
     records = fetch_klines_page(
         symbol, category, start_ms, end_ms, limit=10
     )
 
     if not records:
-        return 0
+        return []
     
     rows = []
     for record in records:
@@ -186,61 +199,103 @@ def update_prices(symbol, category):
             rows.append((symbol, ts_ms, ts, open_, high, low, close, volume))
         except (IndexError, ValueError) as e:
             log_err(f"[{symbol}] Bad kline record: {e}")
+            continue
 
+    return rows
+
+
+def batch_insert_prices(rows, table):
+    """
+    This function inserts a batch of price rows into perp_prices or spot_prices
+    tables in the database.
+    """
     if not rows:
         return 0
+    
+    if table not in ('perp_prices', 'spot_prices'):
+        raise ValueError(f"Invalid table name: {table}")
     
     sql = f"""
         INSERT INTO {table}
             (symbol, timestamp_ms, timestamp, 
             open, high, low, close, volume)
-        VALUES
-            (%s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES %s
         ON CONFLICT (symbol, timestamp_ms, timestamp) DO NOTHING
     """
 
-    with get_connection() as conn:
+    with get_pooled_connection() as conn:
         with conn.cursor() as cur:
-            cur.executemany(sql, rows)
+            psycopg2.extras.execute_values(cur, sql, rows, page_size=BATCH_SIZE)
         conn.commit()
 
     return len(rows)
-
-
-def update_coin_funding_rates(symbol):
-    """
-    This function updates the funding_rates table in the database 
-    for a single coin using the update_funding_rates helper function.
-    """
-    try:
-        n_f = update_funding_rates(symbol)
-        time.sleep(SLEEP_BETWEEN_CALLS)
-        return (symbol, n_f, True)
-    except Exception as e:
-        log_err(f"[{symbol}] Funding rates update failed...")
-        return (symbol, 0, False)
     
 
-def update_coin_prices(symbol):
+# -------------------------- Batch Collector -------------------------------------------
+def collect_all_rows_parallel(coins, fetch_func, max_workers):
     """
-    This function updates both perp_prices and spot_prices tables in
-    the database for a single coin using the update_prices helper function.
+    This function runs fetch_func for every coin in parallel using worker threads.
+    Then collects all returned rows into a single list
+
+    fetch_func: function (like 'update_funding_rates()' and 'update_prices()' that takes a 
+    symbol and returns a list of rows.
+
+    This function returns all the rows from all the coins combined as a list.
+    """    
+    all_rows = []
+    failed   = []
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(fetch_func, symbol): symbol
+            for symbol in  coins
+        }
+
+        for future in as_completed(futures):
+            symbol = futures[future]
+            try:
+                rows = future.result()
+                if rows:
+                    all_rows.extend(rows)
+            except Exception as e:
+                log_info(f"Fetch failed for {symbol}: {e}")
+                failed.append(symbol)
+
+    if failed:
+        log_err(f"{len(failed)} coins failed to fetch")
+
+    return all_rows
+
+
+def insert_in_batches(rows, insert_func, table_name):
     """
-    try:
-        n_p = update_prices(symbol, 'linear')
-        time.sleep(SLEEP_BETWEEN_CALLS)
-        n_s = update_prices(symbol, 'spot')
-        time.sleep(SLEEP_BETWEEN_CALLS)
-        return (symbol, n_p, n_s, True)
-    except Exception as e:
-        log_err(f"[{symbol}] Price update failed: {e}")
-        return (symbol, 0, 0, False)
+    This function takes a list of rows and inserts them in batches.
+    This significantly reduces the total number of single data transactions.
+    """
+    if not rows:
+        return 0
     
+    total_inserted = 0
+    batch_count    = 0
+
+    for i in range(0, len(rows), BATCH_SIZE):
+        batch = rows[i : i + BATCH_SIZE]
+        try:
+            n = insert_func(batch)
+            total_inserted += n
+            batch_count += 1
+        except Exception as e:
+            log_err(f"Batch insert failed for {table_name} "
+                     f"(batch {batch_count + 1}): {e}")
+            
+    log_info(f"{table_name}: {total_inserted} rows in {batch_count} batches")
+    return total_inserted
+
 
 # ------------------------ Pipeline 1: Hourly Price Update ------------------------------
-def run_price_update(max_workers=5):
+def run_price_update():
     """
-    This function is the Pipeline that runs every hour via Github actions
+    This function is the Pipeline that runs every hour via cron-job.org trigger.
     
     Updates perp_prices and spot_prices for all coins and cleans up older rows
     after updating.
@@ -248,33 +303,67 @@ def run_price_update(max_workers=5):
     start_time = datetime.now()
     log_info(f"\n{'='*60}")
     log_info("PRICE UPDATE STARTED")
-    log_info(f"Coins: {len(ALL_COINS)} | Workers: {max_workers}")
+    log_info(f"Coins: {len(ALL_COINS)} | Workers: {MAX_WORKERS} | Pool: {POOL_MAX}")
     log_info(f"\n{'='*60}")
 
-    total_perp = 0
-    total_spot = 0
-    failed     = []
+    # Initialize pool for this run
+    create_pool(min_connections=POOL_MIN, max_connections=POOL_MAX)
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(update_coin_prices, symbol): symbol
-            for symbol in ALL_COINS
-        }
+    try:
+        # Fetch perp prices in parallel
+        log_info("Fetching perpetual prices from Bybit...")
+        perp_rows = collect_all_rows_parallel(
+            ALL_COINS,
+            lambda symbol: fetch_new_prices(symbol, 'linear'),
+            MAX_WORKERS
+        )
+        log_info(f"Fetched {len(perp_rows):,} perp price rows")
 
-        for future in as_completed(futures):
-            symbol, n_p, n_s, success = future.result()
+        # Insert fetched perp prices in batches
+        log_info("Inserting perpetual prices...")
+        total_perp = insert_in_batches(
+            perp_rows,
+            lambda rows: batch_insert_prices(rows, 'perp_prices'),
+            'perp_prices'
+        )
 
-            if success:
-                if n_p > 0 or n_s > 0:
-                    log_info(f"{symbol}: +{n_p} perp, +{n_s} spot")
-                total_perp += n_p
-                total_spot += n_s
-            else:
-                failed.append(symbol)
+        # Fetch spot prices in parallel
+        log_info("Fetching spot prices from Bybit...")
+        spot_rows = collect_all_rows_parallel(
+            ALL_COINS,
+            lambda symbol: fetch_new_prices(symbol, 'spot'),
+            MAX_WORKERS
+        )
+        log_info(f"Fetched {len(spot_rows):,} spot price rows")
 
-    # Clean up old data after insertion
-    cleanup_old_data()
+        # Insert fetched spot prices in batches
+        log_info("Inserting spot prices...")
+        total_spot = insert_in_batches(
+            spot_rows,
+            lambda rows: batch_insert_prices(rows, 'spot_prices'),
+            'spot_prices'
+        )
 
+        # Cleanup
+        log_info("Running cleanup")
+        cleanup_old_data()
+
+        db_size = get_database_size()
+        duration = (datetime.now() - start_time).seconds
+
+        log_info(f"\nPrice update complete in {duration}s")
+        log_info(f"New row: {total_perp:,} perp | {total_spot:,} spot")
+        log_info(f"Database size: {db_size:.1f} MB / 750MB")
+
+        if db_size > 400:
+            log_warn(f"WARNING: Database is {db_size:.0f}MB - approaching 750MB limit!")
+            log_warn(f"Consider reducing RETENTION_DAYS from {RETENTION_DAYS} to {RETENTION_DAYS/1.5}")
+
+    finally:
+        # Close pool, no matter what
+        close_pool()
+
+    # Alert engine runs after pool is closed
     try:
         opps_df = calculate_current_opportunities(threshold_tier='high')
         if not opps_df.empty:
@@ -284,20 +373,6 @@ def run_price_update(max_workers=5):
 
     except Exception as e:
         log_err(f"Alert engine error: {e}")
-
-    db_size = get_database_size()
-    duration = (datetime.now() - start_time).seconds
-
-    log_info(f"\nPrice update complete in {duration}s")
-    log_info(f"New row: {total_perp:,} perp | {total_spot:,} spot")
-    log_info(f"Database size: {db_size:.1f} MB / 750MB")
-
-    if failed:
-        log_warn(f"Failed coins ({len(failed)}): {failed[:10]}")
-
-    if db_size > 400:
-        log_warn(f"WARNING: Database is {db_size:.0f}MB - approaching 750MB limit!")
-        log_warn(f"Consider reducing RETENTION_DAYS from {RETENTION_DAYS} to {RETENTION_DAYS/1.5}")
 
 
 # --------------------------Pipeline 2: 8-hour Funding Rates Update ---------------------------------
@@ -314,36 +389,39 @@ def run_funding_rates_update(max_workers=5):
     log_info(f"Coins: {len(ALL_COINS)} | Workers: {max_workers}")
     log_info(f"\n{'='*60}")
 
-    total_funding = 0
-    failed = []
+    create_pool(min_connections=POOL_MIN, max_connections=POOL_MAX)
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(update_funding_rates, symbol): symbol
-            for symbol in ALL_COINS
-        }
+    try:
+        # Fetch all the funding rates in parallel
+        log_info("Fetching funding rates from Bybit...")    
+        funding_rows = collect_all_rows_parallel(
+            ALL_COINS,
+            fetch_new_funding_rates,
+            MAX_WORKERS
+        )
+        log_info(f"Fetched {len(funding_rows):,} funding rate rows")
 
-        for future in as_completed(futures):
-            symbol, n_f, success = future.result()
+        # Insert funding rates in batches to the database
+        log_info("Inserting funding rates...")
+        total_funding = insert_in_batches(
+            funding_rows,
+            batch_insert_funding_rates,
+            'funding_rates'
+        )
 
-            if success:
-                if n_f > 0:
-                    log_info(f"{symbol}: +{n_f} rate")
-                total_funding += n_f
-            else:
-                failed.append(symbol)
+        # Cleanup
+        log_info("Running cleanup...")
+        cleanup_old_data()
 
-    cleanup_old_data()
+        db_size = get_database_size()
+        duration = (datetime.now() - start_time).seconds
 
-    db_size = get_database_size()
-    duration = (datetime.now() - start_time).seconds
+        log_info(f"\nFunding update complete in {duration}s")
+        log_info(f"New rows: {total_funding:,} funding rates")
+        log_info(f"Database size: {db_size:.1f}MB / 750MB")
 
-    log_info(f"\nFunding update complete in {duration}s")
-    log_info(f"New rows: {total_funding:,} funding rates")
-    log_info(f"Database size: {db_size:.1f}MB / 750MB")
-
-    if failed:
-        log_warn(f"Failed coins ({len(failed)}): {failed[:10]}...")
+    finally:
+        close_pool()
 
 
 if __name__ == "__main__":
