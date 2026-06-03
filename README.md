@@ -99,7 +99,7 @@ perpscope/
 │   │   ├── timescale.py         # TimescaleDB connection + price queries
 │   │   └── supabase.py          # Supabase connection + user queries
 │   ├── main.py                  # FastAPI app — all API endpoints
-│   └── requirements.txt
+│   └── requirements.txt         # Dependencies specific to the backend and database scripts
 │
 ├── src/                         # Data pipeline
 │   ├── config.py                # Coin universe, constants, paths
@@ -126,7 +126,8 @@ perpscope/
 ├── coin_universe.json           # Discovered Bybit perpetual contracts
 ├── market_cap_classification.json # CoinGecko tier classification
 ├── .gitignore
-└── README.md
+├── README.md
+└── requirements.txt             # Global requirements.txt
 ```
 ---
 
