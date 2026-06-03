@@ -16,7 +16,6 @@ from utils import log_info, log_warn, log_err, now_ms, date_to_ms
 from backend.database.timescale import (
     create_pool,
     close_pool,
-    get_connection, 
     get_pooled_connection,
 )
 
@@ -77,7 +76,7 @@ def cleanup_old_data():
 
     log_info(f"Running data cleanup...")
 
-    with get_connection() as conn:
+    with get_pooled_connection() as conn:
         with conn.cursor() as cur:
             for table in tables:
                 try:
@@ -103,7 +102,7 @@ def get_database_size():
     """
 
     try:
-        with get_connection() as conn:
+        with get_pooled_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(sql)
                 row = cur.fetchone()
