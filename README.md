@@ -95,6 +95,7 @@ perpscope/
 │
 ├── backend/                     # FastAPI backend (deployed on Render)
 │   ├── database/
+│   │   ├── db_config.py         # Supabase and TimescaleDB urls
 │   │   ├── timescale.py         # TimescaleDB connection + price queries
 │   │   └── supabase.py          # Supabase connection + user queries
 │   ├── main.py                  # FastAPI app — all API endpoints
