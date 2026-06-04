@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "perpscope"
+version = "0.1.0"
+description = "Real-time perpetual futures mispricing detection and funding rate arbitrage analytics"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "David Nwosu", email = "nwosudavid13@gmail.com"}
+]
+keywords = ["finance", "arbitrage", "perpetual-futures"]
+
+
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "psycopg2-binary",
+    "python-dotenv",
+    "httpx",
+    "python-jose[cryptography]",
+    "pandas",
+    "requests",
+]
+
+[project.optional-dependencies]
+backend = [
+    "fastapi>=0.104",
+    "uvicorn[standard]>=0.24",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1.0",
+    "mypy>=1.7",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "backend*"]
+exclude = ["tests*"]
+
+# Pytest
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers"
+asyncio_mode = "auto"
