@@ -7,15 +7,13 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import (
+from src.config import (
     BASE_URL, PRODUCT_UNIVERSE, REQUEST_TIMEOUT,
     SLEEP_BETWEEN_CALLS, SLEEP_ON_ERROR, HISTORY_START_DAY, 
     HISTORY_START_MONTH, HISTORY_START_YEAR, create_data_dir,
     get_funding_path, get_perp_path, get_spot_path
 )
-from utils import date_to_ms, now_ms, log_info, log_warn, log_err
+from src.utils import date_to_ms, now_ms, log_info, log_warn, log_err
 
 
 # ----------------------FUNDING RATE--------------------------------------------

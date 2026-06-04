@@ -4,12 +4,11 @@ import sys
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import ALL_COINS
-from collect_historical import fetch_funding_rates_page, fetch_klines_page
-from calculate_rho import calculate_current_opportunities
-from telegram_alerts import check_and_send_alerts
-from utils import log_info, log_warn, log_err, now_ms
+from src.config import ALL_COINS
+from src.collect_historical import fetch_funding_rates_page, fetch_klines_page
+from src.calculate_rho import calculate_current_opportunities
+from src.telegram_alerts import check_and_send_alerts
+from src.utils import log_info, log_warn, log_err, now_ms
 
 from backend.database.timescale import (
     create_pool,

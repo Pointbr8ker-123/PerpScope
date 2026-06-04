@@ -1,6 +1,5 @@
 import httpx
 import os
-import sys
 import numpy as np
 import uvicorn
 from datetime import datetime, timezone
@@ -9,28 +8,21 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Depends, Req
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 
+from database.db_config import SUPABASE_JWKS_URL
 from database.timescale import get_connection
 from database.supabase import get_supabase_connection
-from src.telegram_alerts import send_message
 
-BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
-SRC_DIR = os.path.join(PROJECT_ROOT, 'src')
-
-sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, SRC_DIR)
-
-from config import ALL_COINS, MARKET_CAP_LOOKUP
-from calculate_rho import (
+from src.calculate_funding import annualize_funding_rate, get_funding_signal
+from src.calculate_rho import (
     calculate_rho,
     get_signal,
     THRESHOLDS,
     KAPPA, IOTA, GAMMA, RISK_FREE_RATE_8HR, PERIODS_PER_YEAR
 )
-from utils import log_info, log_warn, log_err
-from calculate_funding import annualize_funding_rate, get_funding_signal
-from update_data import run_price_update, run_funding_rates_update
-from database.db_config import SUPABASE_JWKS_URL
+from src.config import ALL_COINS, MARKET_CAP_LOOKUP
+from src.telegram_alerts import send_message
+from src.update_data import run_price_update, run_funding_rates_update
+from src.utils import log_info, log_warn, log_err
 
 
 # -------------------------------- MARKET CAP DATA --------------------------------------

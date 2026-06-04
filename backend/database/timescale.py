@@ -1,10 +1,6 @@
-import sys
 import os
 import json
 import pandas as pd
-
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, PROJECT_ROOT)
 
 from backend.database.db_config import TIMESCALE_DATABASE_URL
 from backend.database.supabase import get_supabase_connection

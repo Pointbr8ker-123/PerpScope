@@ -2,7 +2,7 @@ import requests
 import json
 import os
 from datetime import datetime, timezone
-from config import BASE_URL
+from src.config import BASE_URL
 
 
 def get_all_linear_perpetuals():

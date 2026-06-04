@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-from utils import log_info, log_err
+from src.utils import log_info, log_err
 
 load_dotenv()
 

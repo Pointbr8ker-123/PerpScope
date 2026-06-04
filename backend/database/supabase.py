@@ -1,10 +1,5 @@
-import sys
-import os
 import psycopg2
 import psycopg2.extras
-
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, PROJECT_ROOT)
 
 from backend.database.db_config import SUPABASE_DATABASE_URL
 from src.utils import log_info, log_err

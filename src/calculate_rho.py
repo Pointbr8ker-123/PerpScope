@@ -22,11 +22,8 @@
 
 import pandas as pd
 import numpy as np
-import sys
-import os
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import MARKET_CAP_LOOKUP
+from src.config import MARKET_CAP_LOOKUP
 from backend.database.timescale import get_connection
 
 
@@ -75,6 +72,10 @@ def calculate_rho(futures_price, spot_price, risk_free_rate=RISK_FREE_RATE_8HR):
     
     # Premium index: (F - S)/F
     premium_index = (futures_price - spot_price) / futures_price
+
+    # Check for excessive premium value (probably corrupted data)
+    if (premium_index * 100) >= 20.0:
+        return np.nan
 
     # sign(ι - r) which determines the side of the funding clamp we're on
     sign_iota_minus_r = float(np.sign(IOTA - risk_free_rate))

@@ -3,10 +3,8 @@ import json
 import os
 import time
 
-import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import REQUEST_TIMEOUT, COINGECKO_BASE_URL
-from utils import log_info, log_warn, log_err
+from src.config import REQUEST_TIMEOUT, COINGECKO_BASE_URL
+from src.utils import log_info, log_warn, log_err
 
 
 def fetch_coingecko_page(page, per_page=250):
