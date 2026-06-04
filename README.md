@@ -125,6 +125,7 @@ perpscope/
 │
 ├── coin_universe.json           # Discovered Bybit perpetual contracts
 ├── market_cap_classification.json # CoinGecko tier classification
+├── pyproject.toml               # Project config, dependencies, and build settings
 ├── .gitignore
 ├── README.md
 └── requirements.txt             # Global requirements.txt
