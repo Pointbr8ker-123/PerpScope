@@ -8,7 +8,6 @@ from jose import jwt, JWTError, jwk
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Depends, Request, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
 from database.timescale import get_connection
 from database.supabase import get_supabase_connection
@@ -31,7 +30,7 @@ from calculate_rho import (
 from utils import log_info, log_warn, log_err
 from calculate_funding import annualize_funding_rate, get_funding_signal
 from update_data import run_price_update, run_funding_rates_update
-from database.db_config import SUPABASE_URL, SUPABASE_JWKS_URL
+from database.db_config import SUPABASE_JWKS_URL
 
 
 # -------------------------------- MARKET CAP DATA --------------------------------------

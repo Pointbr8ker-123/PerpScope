@@ -12,7 +12,6 @@ from src.config import BASE_DIR, DATA_DIR, ALL_COINS
 from src.utils import log_info, log_err, log_warn, now_ms
 
 import psycopg2
-import psycopg2.extras
 import threading
 from contextlib import contextmanager
 from psycopg2.pool import ThreadedConnectionPool
