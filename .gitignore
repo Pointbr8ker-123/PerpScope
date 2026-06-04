@@ -15,3 +15,7 @@ perpscope_venv/
 __pycache__/
 *.pyc
 .env
+.eggs
+
+# Python packaging
+perpscope.egg-info/
