@@ -2,8 +2,8 @@ import os
 import json
 import pandas as pd
 
-from backend.database.db_config import TIMESCALE_DATABASE_URL
-from backend.database.supabase import get_supabase_connection
+from db_config import TIMESCALE_DATABASE_URL
+from supabase import get_supabase_connection
 from src.config import BASE_DIR, DATA_DIR, ALL_COINS
 from src.utils import log_info, log_err, log_warn, now_ms
 
