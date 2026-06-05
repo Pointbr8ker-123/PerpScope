@@ -8,9 +8,9 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Query, Depends, Req
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 
-from database.db_config import SUPABASE_JWKS_URL
-from database.timescale import get_connection
-from database.supabase import get_supabase_connection
+from backend.database.db_config import SUPABASE_JWKS_URL
+from backend.database.timescale import get_connection
+from backend.database.supabase import get_supabase_connection
 
 from src.calculate_funding import annualize_funding_rate, get_funding_signal
 from src.calculate_rho import (
