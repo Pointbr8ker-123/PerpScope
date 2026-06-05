@@ -306,14 +306,6 @@ async def get_opportunities(
         # then by abs_rho descending within each group
         results.sort(key=lambda x: (not x['is_opportunity'], -x['abs_rho']))
 
-        # return {
-        #     "threshold_tier":    threshold,
-        #     "threhold_value":    THRESHOLDS[threshold],
-        #     "total_coins":       len(results),
-        #     "opportunity_count": sum(1 for r in results if r['is_opportunity']),
-        #     "data":              results
-        # }
-
     return results
 
 
@@ -971,7 +963,6 @@ async def connect_telegram(body: dict = Body(...),
             cur.execute(sql, (chat_id, user['id']))
         conn.commit()
 
-    from telegram_alerts import send_message
     send_message(chat_id, (
         "✅ *PerpScope Telegram connected!*\n\n"
         "You will receive alerts here when opportunities are detected.\n"
