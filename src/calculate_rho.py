@@ -74,8 +74,8 @@ def calculate_rho(futures_price, spot_price, risk_free_rate=RISK_FREE_RATE_8HR):
     premium_index = (futures_price - spot_price) / futures_price
 
     # Check for excessive premium value (probably corrupted data)
-    if (premium_index * 100) >= 20.0:
-        return np.nan
+    # if (premium_index * 100) >= 20.0:
+    #     return np.nan
 
     # sign(ι - r) which determines the side of the funding clamp we're on
     sign_iota_minus_r = float(np.sign(IOTA - risk_free_rate))
