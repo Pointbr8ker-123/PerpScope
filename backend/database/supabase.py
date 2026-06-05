@@ -1,7 +1,7 @@
 import psycopg2
 import psycopg2.extras
 
-from backend.database.db_config import SUPABASE_DATABASE_URL
+from .db_config import SUPABASE_DATABASE_URL
 from src.utils import log_info, log_err
 
 def get_supabase_connection():
