@@ -1,11 +1,8 @@
-import sys
-import os
 import math
-import pytest
 import numpy as np
+import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-from calculate_rho import (
+from src.calculate_rho import (
     calculate_rho,
     get_signal,
     THRESHOLDS,

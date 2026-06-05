@@ -48,5 +48,6 @@ exclude = ["tests*"]
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = ["tests"]
+pythonpath = ["."]  
 addopts = "-v --tb=short --strict-markers"
 asyncio_mode = "auto"

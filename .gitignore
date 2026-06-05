@@ -9,7 +9,7 @@ collection_log.txt
 *.log
 
 # Virtual Environment
-perpscope_venv/
+.venv/
 
 # Python cache
 __pycache__/
