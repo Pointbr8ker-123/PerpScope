@@ -1,5 +1,6 @@
 import httpx
 import os
+import math
 import numpy as np
 import uvicorn
 from datetime import datetime, timezone
@@ -119,6 +120,22 @@ def get_coin_metadata(symbol):
         'rank': 9999,
         'name': symbol.replace('USDT', '')
     })
+
+
+def sanitize_floats(val):
+    """
+    This function recursively replaces NaN and inf values with None in a list
+    or dict or if its a single float value before FastAPI receives it.
+    """
+    if isinstance(val, dict):
+        return {k: sanitize_floats(v) for k, v in val.items()}
+    elif isinstance(val, list):
+        return [sanitize_floats(v) for v in val]
+    elif isinstance(val, float):
+        if math.isnan(val) or math.isinf(val):
+            return None
+        return val
+    return val
 
 
 @app.get("/")
@@ -306,7 +323,7 @@ async def get_opportunities(
         # then by abs_rho descending within each group
         results.sort(key=lambda x: (not x['is_opportunity'], -x['abs_rho']))
 
-    return results
+    return sanitize_floats(results)
 
 
 @app.get("/api/coin/{symbol}")
@@ -405,7 +422,7 @@ async def get_coin_detail(symbol):
     rho        = calculate_rho(perp_price, spot_price)
     metadata   = get_coin_metadata(symbol)
     
-    return {
+    return sanitize_floats({
         "symbol":          symbol,
         "display_symbol":  symbol.replace('USDT', ''),
         "name":            metadata['name'],
@@ -416,13 +433,9 @@ async def get_coin_detail(symbol):
         "premium":         round((perp_price - spot_price)/spot_price * 100, 4),
         "rho_annual":      round(rho, 4),
         "signal":          get_signal(rho),
-        # "signal_by_tier":  {
-        #     tier: get_signal(rho, tier) for tier in THRESHOLDS.keys()
-        # },
         "mean_abs_rho_90d": round(mean_abs_rho_90d, 4),
         "pct_time_opportunity": round(pct_time_opportunity, 4)
-        # "last_updated":    row['last_updated'].isoformat()
-    }
+    })
 
 
 @app.get("/api/history/{symbol}")
@@ -469,6 +482,11 @@ async def get_coin_history(symbol, days=Query(default=90)):
     history = []
     for row in rows:
         rho = calculate_rho(float(row['perp_price']), float(row['spot_price']))
+
+        # Skip corrupted data
+        if rho != rho:
+            continue
+
         history.append({
             "date":         row['timestamp'].strftime('%Y-%m-%d'),
             "perp_price":   round(row['perp_price'], 8),
@@ -480,7 +498,7 @@ async def get_coin_history(symbol, days=Query(default=90)):
     rho_values     = [h['rho'] for h in history]
     abs_rho_values = [abs(r) for r in rho_values]
 
-    return {
+    return sanitize_floats({
         "symbol":       symbol,
         "days":         days,
         "data_points":  len(history),
@@ -495,7 +513,7 @@ async def get_coin_history(symbol, days=Query(default=90)):
             )
         },
         "data":         history
-    }
+    })
 
 
 @app.get("/api/funding/{symbol}")
@@ -545,7 +563,7 @@ async def get_funding_history(
 
     rates_ann = [d['rate_annualized'] for d in data]
 
-    return {
+    return sanitize_floats({
         "symbol":      symbol,
         "days":        days,
         "data_points": len(data),
@@ -555,7 +573,7 @@ async def get_funding_history(
             "min_annualized":   round(min(rates_ann), 2),
         },
         "data":        data
-    }
+    })
 
 
 @app.get("/api/research/summary")
@@ -643,11 +661,11 @@ async def get_research_summary(days=Query(default=90)):
     if large_rhos and small_rhos:
         ratio_small_large = round(np.mean(small_rhos) / np.mean(large_rhos), 4)
 
-    return {
+    return sanitize_floats({
         "ratio_small_large": ratio_small_large,
         "tiers": tiers_array,
         "scatter": results    
-    }
+    })
 
 
 @app.get("/api/stats")
@@ -699,6 +717,10 @@ async def get_market_stats():
         meta   = get_coin_metadata(symbol)
         tier   = meta['tier']
 
+        # Skip NaN values - they indicate corrupted data
+        if rho != rho:
+            continue
+
         all_rho.append(rho)
 
         if abs(rho) > THRESHOLDS['high']:
@@ -712,7 +734,7 @@ async def get_market_stats():
     large_mean = sum(rho_by_tier['LARGE']) / len(rho_by_tier['LARGE']) if rho_by_tier['LARGE'] else 0
     ratio      = round(small_mean / large_mean, 2) if large_mean else 0
 
-    return {
+    return sanitize_floats({
         "coins_monitored":       len(rows),
         "active_opportunities":  opp_count,
         "mean_rho":              round(mean_rho, 4),
@@ -721,7 +743,7 @@ async def get_market_stats():
             tier: len(vals)
             for tier, vals in rho_by_tier.items()
         }
-    }
+    })
 
 
 @app.get("/debug/prices/{symbol}")
