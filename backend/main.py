@@ -459,7 +459,7 @@ async def get_coin_history(symbol, days=Query(default=90)):
             ON p.symbol = s.symbol
             AND p.timestamp_ms = s.timestamp_ms
         WHERE p.symbol = %s
-            AND p.timestamp >= NOW() - INTERVAL 'I day' * %s
+            AND p.timestamp >= NOW() - INTERVAL '1 day' * %s
             AND p.close > 0
             AND s.close > 0
         ORDER BY p.timestamp_ms ASC
