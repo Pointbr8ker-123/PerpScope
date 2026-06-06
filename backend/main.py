@@ -453,7 +453,8 @@ async def get_coin_history(symbol, days=Query(default=90)):
         SELECT 
             p.symbol,
             p.close AS perp_price,
-            s.close AS spot_price
+            s.close AS spot_price,
+            p.timestamp
         FROM perp_prices p
         JOIN spot_prices s
             ON p.symbol = s.symbol
