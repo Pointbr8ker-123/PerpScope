@@ -10,7 +10,7 @@ from src.calculate_rho import calculate_current_opportunities
 from src.telegram_alerts import check_and_send_alerts
 from src.utils import log_info, log_warn, log_err, now_ms
 
-from backend.database.timescale import (
+from backend.database.connection import (
     create_pool,
     close_pool,
     get_pooled_connection,
