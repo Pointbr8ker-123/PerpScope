@@ -10,8 +10,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database.db_config import SUPABASE_JWKS_URL
-from backend.database.timescale import get_connection
-from backend.database.supabase import get_supabase_connection
+from backend.database.connection import get_connection
 
 from src.calculate_funding import annualize_funding_rate, get_funding_signal
 from src.calculate_rho import (
@@ -936,7 +935,7 @@ async def get_current_user_db_id(user=Depends(get_current_user)):
             AND is_active = true
     """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (supabase_uid,))
             row = cur.fetchone()
@@ -981,7 +980,7 @@ async def connect_telegram(body: dict = Body(...),
         WHERE id = %s
     """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (chat_id, user['id']))
         conn.commit()
@@ -1025,7 +1024,7 @@ async def get_alerts(user=Depends(get_current_user_db_id)):
         ORDER BY created_at DESC
     """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (user['id'],))
             rows = cur.fetchall()
@@ -1093,7 +1092,7 @@ async def create_alert(body: dict = Body(...),
 
     if user['plan'] == "free":
         count_sql = "SELECT COUNT(*) as c FROM user_alerts WHERE user_id = %s AND is_active = true"
-        with get_supabase_connection() as conn:
+        with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(count_sql, (user['id'],))
                 row = cur.fetchone()
@@ -1112,7 +1111,7 @@ async def create_alert(body: dict = Body(...),
         RETURNING id
     """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (
                 user['id'],
@@ -1137,7 +1136,7 @@ async def delete_alert(alert_id, user=Depends(get_current_user_db_id)):
         WHERE id = %s AND user_id = %s
     """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (alert_id, user['id']))
         conn.commit()

@@ -24,7 +24,7 @@ import pandas as pd
 import numpy as np
 
 from src.config import MARKET_CAP_LOOKUP
-from backend.database.timescale import get_connection
+from backend.database.connection import get_connection
 
 
 # ----------------Bybit Funding rate parameters-------------------------

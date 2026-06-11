@@ -1,22 +1,5 @@
-import psycopg2
-import psycopg2.extras
-
-from backend.database.db_config import SUPABASE_DATABASE_URL
 from src.utils import log_info, log_err
-
-def get_supabase_connection():
-    """
-    This functions opens a connection to my Supabase PostgreSQL database.
-
-    Used by: user auth, alerts, subscriptions, coin_universe
-    
-    Tables here: users, user_alerts, user_subscriptions,
-                 coin_universe, collection_progress
-    """
-    return psycopg2.connect(
-        SUPABASE_DATABASE_URL,
-        cursor_factory=psycopg2.extras.RealDictCursor
-    )
+from backend.database.connection import get_connection
 
 
 def create_supabase_tables():
@@ -107,7 +90,7 @@ def create_supabase_tables():
         )
     ]
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             for name, sql in statements:
                 try:
@@ -126,7 +109,7 @@ def alter_table(table_name, old_column_name, new_column_name):
         ALTER TABLE {table_name}
         RENAME COLUMN {old_column_name} TO {new_column_name}
     """
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql)
         conn.commit()
@@ -139,7 +122,7 @@ def add_column(table_name, column_name, data_type):
         ALTER TABLE {table_name}
         ADD COLUMN IF NOT EXISTS {column_name} {data_type}
     """
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql)
         conn.commit()

@@ -1,5 +1,5 @@
 import pandas as pd
-from backend.database.timescale import get_connection
+from backend.database.connection import get_connection
 
 
 PERIODS_PER_YEAR = 1095

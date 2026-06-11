@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 from datetime import datetime, timezone
-from backend.database.supabase import get_supabase_connection
+from backend.database.connection import get_connection
 from src.utils import log_info, log_warn, log_err
 
 logger = logging.getLogger(__name__)
@@ -153,7 +153,7 @@ def get_alerts_states_for_symbol(symbol):
           AND u.is_active  = true
     """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (symbol,))
             rows = cur.fetchall
@@ -181,7 +181,7 @@ def upsert_alert_state(user_id, symbol, state, opened_at=None,
             last_alerted_at = NOW()
     """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (
                 user_id, symbol, state,
@@ -224,7 +224,7 @@ def get_users_with_global_alerts():
           AND u.telegram_chat_id IS NOT NULL
     """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql)
             rows = cur.fetchall()
