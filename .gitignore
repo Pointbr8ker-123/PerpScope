@@ -19,3 +19,5 @@ __pycache__/
 
 # Python packaging
 perpscope.egg-info/
+
+research/
