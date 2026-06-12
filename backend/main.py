@@ -100,11 +100,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:3000",
-        "https://perpscope.vercel.app",
-        "*" # Remember to replace this with my actual vercel url before going live
+        "https://perpscope-frontend.nwosudavid13.workers.dev/",
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -1139,7 +1138,14 @@ async def delete_alert(alert_id, user=Depends(get_current_user_db_id)):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (alert_id, user['id']))
+            deleted = cur.rowcount
         conn.commit()
+
+    if deleted == 0:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Alert {alert_id} not found or does not belong to this user"
+        )
 
     return {"status": "deleted"}
 
