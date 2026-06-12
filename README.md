@@ -1,6 +1,6 @@
 # PerpScope — Altcoin Perpetual Futures Analytics
 
-> Real-time funding rate deviation analytics across 200+ altcoin perpetual futures.
+> Real-time funding rate deviation analytics across ~300 altcoin perpetual futures.
 
 - **Live Platform:** https://perpscope-frontend.nwosudavid13.workers.dev/
 - **Research Basis:** He, Manela, Ross & von Wachter (2024) — 
@@ -11,7 +11,7 @@
 ## How PerpScope Works
 
 PerpScope monitors the gap between perpetual futures prices and their
-theoretical no-arbitrage fair values accross 200+ altcoins on Bybit.
+theoretical no-arbitrage fair values accross ~300 altcoins on Bybit.
 
 When the gap exceeds the trading cost thresholds, a funding rate arbitrage opportunity exists: short the overpriced perpetual, long the spot, collect funding rate payments until prices converge.
 
@@ -20,7 +20,7 @@ PerpScope calculates the value of this "gap" or deviation (ρ) in real time for 
 
 ## Features
 
-- **Real-time mispricing detection** — Monitors 300+ altcoin perpetual futures to identify when contract prices deviate from spot prices
+- **Real-time mispricing detection** — Monitors ~300 altcoin perpetual futures to identify when contract prices deviate from spot prices
 - **Opportunity leaderboard** — Ranked list showing which coins have the largest current mispricing
 - **Deep dive analytics** — Historical charts for each coin showing mispricing trends and funding rates over time
 - **Market cap research** — Compare how large, mid, and small cap coins behave differently (small caps show larger deviations)
@@ -49,14 +49,11 @@ Annualized by multiplying by 1095 (i.e 3 funding periods/day x 365 days/year)
 - γ = 0.0005 (clamp width, 0.05%)
 - r ≈ 0.0000548 (risk-free rate proxy, ~6% annual stablecoin lending)
 
-**Original research contribution:**
+**Original contribution:**
 
-This project extends He et al.'s framework — originally applied to 5
-large-cap coins — to a universe of 300+ altcoins, testing whether funding
-rate deviation magnitude varies systematically with market capitalisation.
-Early results suggest small-cap altcoins exhibit 3-7× higher mean |ρ|
-than large-cap coins, consistent with reduced arbitrage capital in less
-liquid markets.
+This project takes He et al.'s framework—which originally looked at just 5 large-cap coins—and applies it to over 200 altcoins. The goal? To see whether funding rate deviations get bigger or smaller depending on a coin's market cap.
+
+Early results suggest they do. Small-cap altcoins show average |ρ| values that are 3 to 7 times higher than large-cap coins. This makes sense: there's less arbitrage capital flowing through less liquid markets, so price discrepancies stick around longer.
 
 ---
 
@@ -264,7 +261,7 @@ TimescaleDB's free tier only lasts a month. So I consolidated everything
 into Supabase before the TimescaleDB expired and broke the system.
 
 Turns out, standard PostgreSQL with good indexing handles our current 
-needs just fine — 200+ coins, a 90-day rolling window, about 150MB total data.
+needs just fine — ~300 coins, a 90-day rolling window, about 150MB total data.
 
 If PerpScope ever grow past 500 coins or need to keep data for more than a 
 year, we can bring TimescaleDB back. The old connection code is still sitting 
@@ -272,3 +269,55 @@ in `backend/database/timescale.py`, so the switch would be straightforward.
 
 ---
 
+## Roadmap and Future Work
+
+These are the features and improvements I hope to implement in the near future, roughly in priority order based on the goals for this product.
+
+**Research:**
+- DAR(2) predictive model (from Inan, 2025) to forecast funding rates. Basically, build an autoregressive model that predicts the next period's rates and shows how accurate it is on the Research page.
+- Cross-exchange comparison for BTC and ETH (e.g Bybit vs Binance). This would test whether price deviations are correlated across exchanges, which addresses our current single-exchange limitation.
+
+**Product:**
+- Paper trading system - track hypothetical positions, calculate P&L, and prove the signals work before anyone risks real capital.
+- Signal history feed - a log of every alert we have fired and what happened afterward, so users (and I) can judge whether the signals are any good.
+- Portfolio tracker - for users to monitor open arbitrage positions.
+- Paid tier - Nigerian market via Paystack, international via Stripe. Free users get 3 alerts; Pro gets unlimited + Websocket real-time updates.
+- Websocket real-time prices - The dashboard currently polls hourly (with funding rates updating every 8hrs). Real-time updares would be better for prompt opportunity detection.
+
+**Infrastructure:**
+- TimescaleDB (Hypertables) - the system is currently fine at ~300 coins (plus the 90-day retention system), but if we cross 500+ coins and decide to increase the retention window for research purposes, the current schema will suffer. Hypertables would go a long way to remedy this.
+- Redis caching layer - endpoints like `/api/opportunities` and `/api/stats` hit the database on every request. A short Redis cache would cut this load significantly.
+- Multi-exchange support (e.g Binance, OKX API adapters)
+
+**Limitations to look into:**
+- ρ calculation accuracy depends on good price data — Bybit sometimes gives us bad rows that need manual cleaning
+- Alerts only work through Telegram right now; email is planned
+- Market cap data requires manual refreshes from CoinGecko (not automated yet)
+
+---
+
+## Contributing
+
+PerpScope is open to contributions. I tried to make it so you can contribute to certain parts without touching or understanding everything else.
+
+**High-impact areas for interested contributors:**
+
+**Data pipeline improvements:**
+- Add support for Binance or OKX API as a second data source (`src/collect_historical.py` and `src/update_data.py`)
+- Improve the price validation layer to catch more data quality issues before bad rows reach the database
+- Implement automatic stale data detection and cleanup
+- Extend market cap classification to auto-refresh from CoinGecko API
+
+**Frontend (perpscope-frontend repo):**
+- Mobile responsiveness improvements on the CoinDetail page
+- Additional chart types (funding rate vs ρ correlation scatter)
+- Accessibility improvements (screen reader support, keyboard navigation)
+
+**Getting started as a contributor:**
+1. Fork the repository
+2. Read the README fully, especially the Architecture section
+3. Run the tests: `python tests/test_calculate_rho.py`
+4. Pick an issue or improvement from the list above
+5. Open a pull request with a clear description of what changed and why
+
+Code style: Use descriptive variable names and add docstrings to all new functions. See existing code for examples.
