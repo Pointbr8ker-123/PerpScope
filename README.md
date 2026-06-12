@@ -322,3 +322,32 @@ PerpScope is open to contributions. I tried to make it so you can contribute to 
 5. Open a pull request with a clear description of what changed and why
 
 Code style: Use descriptive variable names and add docstrings to all new functions. See existing code for examples.
+
+---
+
+## Docker
+
+The backend can be run in a Docker container for consistent
+local development and easier deployment.
+
+**Prerequisites:** Docker and Docker Compose installed.
+
+```bash
+# Build and start the backend
+docker-compose -f docker/docker-compose.yml up
+
+# Run in background
+docker-compose -f docker/docker-compose.yml up -d
+
+# View logs
+docker-compose -f docker/docker-compose.yml logs -f
+
+# Stop
+docker-compose -f docker/docker-compose.yml down
+```
+
+The API will be available at `http://localhost:8000`.
+Interactive docs at `http://localhost:8000/docs`.
+
+**Note:** The container connects to your Supabase database via
+the `DATABASE_URL` in your `.env` file. No local database setup needed.
