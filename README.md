@@ -96,7 +96,9 @@ perpscope/
 ├── backend/                     # FastAPI backend (deployed on Render)
 │   ├── database/
 │   │   ├── db_config.py         # Supabase and TimescaleDB urls
-│   │   ├── timescale.py         # TimescaleDB connection + price queries
+│   │   ├── connection.py        # Supabase connection + pool
+│   │   ├── timescale.py         # Archived (TimescaleDB reference)
+│   │   ├── migrate_to_supabase.py # one-time migration script
 │   │   └── supabase.py          # Supabase connection + user queries
 │   ├── main.py                  # FastAPI app — all API endpoints
 │   └── requirements.txt         # Dependencies specific to the backend and database scripts
@@ -122,6 +124,10 @@ perpscope/
 │   └── workflows/
 │       ├── update_prices.yml    # Hourly price update (GitHub Actions backup)
 │       └── update_funding.yml   # 8-hour funding rate update (backup)
+│
+├── docker/
+│   ├── Dockerfile               # Backend container definition
+│   └── docker-compose.yml       # Local development stack
 │
 ├── coin_universe.json           # Discovered Bybit perpetual contracts
 ├── market_cap_classification.json # CoinGecko tier classification
@@ -242,3 +248,27 @@ The frontend connects to the FastAPI backend via the endpoints
 documented at `/docs` on the running server.
 
 ---
+
+## Architecture Decision: Single Database
+
+PerpScope uses a single Supabase PostgreSQL database for everything — price 
+data, user accounts, and alerts.
+
+I actually started with a split setup: time-series price data went into 
+TimescaleDB, while user data stayed in Supabase. Why? Because Supabase's 
+free tier only gives you 500MB, which filled up fast. But once I added 
+the 90-day data retention policy, storage wasn't a problem anymore.
+
+I kept running both databases for a while, but then I found out 
+TimescaleDB's free tier only lasts a month. So I consolidated everything 
+into Supabase before the TimescaleDB expired and broke the system.
+
+Turns out, standard PostgreSQL with good indexing handles our current 
+needs just fine — 200+ coins, a 90-day rolling window, about 150MB total data.
+
+If PerpScope ever grow past 500 coins or need to keep data for more than a 
+year, we can bring TimescaleDB back. The old connection code is still sitting 
+in `backend/database/timescale.py`, so the switch would be straightforward.
+
+---
+
