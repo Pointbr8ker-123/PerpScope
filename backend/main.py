@@ -100,10 +100,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:3000",
-        "https://perpscope-frontend.nwosudavid13.workers.dev/",
+        "https://perpscope-frontend.nwosudavid13.workers.dev",
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS", "PATCH"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
 
