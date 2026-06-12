@@ -240,7 +240,7 @@ def process_coin_alert(coin):
     and sends alerts where appropriate.
     """
     symbol          = coin['symbol']
-    rho             = coin['rho_annual']
+    rho             = coin.get('rho_annual') or coin.get('rho')
     signal          = coin['signal']
     is_neutral      = signal == 'NEUTRAL'
 
