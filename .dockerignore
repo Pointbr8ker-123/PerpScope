@@ -1,0 +1,53 @@
+# Version control
+.git/
+
+# Environment & secrets
+.env
+.env.local
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+
+# Data files
+data/
+*.csv
+*.db
+
+# Logs
+*.log
+ops.txt
+collection_log.txt
+
+# Frontend (backend doesn't need it at runtime)
+node_modules/
+perpscope-frontend/
+frontend/
+
+# IDE
+.vscode/
+
+# Testing
+tests/
+test_*.py
+*_test.py
+.pytest_cache/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+
+# Cache directories
+.mypy_cache/
+.ipynb_checkpoints/
