@@ -130,6 +130,7 @@ perpscope/
 ├── market_cap_classification.json # CoinGecko tier classification
 ├── pyproject.toml               # Project config, dependencies, and build settings
 ├── .gitignore
+├── .dockerignore
 ├── README.md
 └── requirements.txt             # Global requirements.txt
 ```
