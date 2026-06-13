@@ -119,7 +119,7 @@ flowchart TB
     
     TelegramAPI -->|"Chat ID"| Webhook
     Webhook -->|"Update"| Supabase
-
+```
 
 - **cron-job.org** (free)
   - Triggers price updates (hourly)
