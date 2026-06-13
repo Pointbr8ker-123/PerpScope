@@ -60,72 +60,28 @@ Early results suggest they do. Small-cap altcoins show average |ρ| values that 
 ### Architecture
 
 ```mermaid
-flowchart TB
-    subgraph Sources["📡 Data Sources"]
-        B[Bybit API<br/>Perpetual + Spot + Funding]
-        C[CoinGecko API<br/>Market Cap Tiers]
-    end
+flowchart TD
+    U([👤 User]) -->|Browser| FE[Cloudflare Pages<br/>perpscope-frontend.nwosudavid13.workers.dev]
+    FE -->|GET /api/*| BE[FastAPI Backend<br/>Render — Frankfurt EU]
 
-    subgraph Automation["⏰ Automation"]
-        CRON[cron-job.org<br/>Hourly / 8-hour triggers]
-    end
+    CR[cron-job.org<br/>Hourly / 8hr] -->|POST /trigger/prices| BE
+    CR -->|POST /trigger/funding| BE
 
-    subgraph Backend["⚡ FastAPI Backend (Render, EU)"]
-        T1["/trigger/prices"]
-        T2["/trigger/funding"]
-        E1["/api/opportunities"]
-        E2["/api/coin/{symbol}"]
-        E3["/api/stats"]
-        E4["/api/history/{symbol}"]
-        E5["/webhook/telegram"]
-        AUTH["Supabase JWT Auth"]
-    end
+    BE -->|Runs| DP[src/ Data Pipeline<br/>update_data.py]
+    DP -->|Fetches OHLCV + Funding| BY[Bybit API<br/>~300 USDT contracts]
 
-    subgraph Pipeline["🔧 Data Pipeline (src/)"]
-        HIST[collect_historical.py]
-        INC[update_data.py]
-        RHO[calculate_rho.py]
-        ALERT[telegram_alerts.py]
-    end
+    BE <-->|Query / Insert| DB[(Supabase PostgreSQL)]
+    DP -->|Store prices, funding,<br/>user alerts| DB
 
-    subgraph Database["🗄️ Supabase PostgreSQL"]
-        TS[(TimescaleDB Hypertables<br/>perp_prices, spot_prices<br/>funding_rates)]
-        META[(Metadata Tables<br/>coin_universe)]
-        USER[(User Tables<br/>users, user_alerts)]
-    end
+    BE -->|JWT Verify| AUTH[Supabase Auth]
+    BE -->|POST /webhook/telegram| TG[Telegram Bot]
 
-    subgraph Clients["👤 Clients"]
-        FE[React Dashboard<br/>perpscope.vercel.app]
-        TG[Telegram Bot<br/>Alerts & Commands]
-    end
-
-    B -->|OHLCV + Funding| HIST
-    B -->|Incremental| INC
-    C -->|Tier Classification| META
-    HIST -->|Seed| TS
-    INC -->|Hourly / 8hr| TS
-    RHO -->|ρ Deviation| E1
-    ALERT -->|Push| TG
-
-    CRON -->|POST| T1
-    CRON -->|POST| T2
-    T1 -->|Invoke| INC
-    T2 -->|Invoke| INC
-
-    TS -->|Query| E1
-    TS -->|Query| E2
-    TS -->|Query| E3
-    TS -->|Query| E4
-    META -->|Lookup| E1
-    USER -->|Auth| AUTH
-    USER -->|Alerts| ALERT
-
-    FE -->|GET| E1
-    FE -->|GET| E2
-    FE -->|GET| E3
-    FE -->|GET| E4
-    TG -->|POST| E5
-    E5 -->|Update| USER
+    style FE fill:#fbbf24,stroke:#000
+    style BE fill:#60a5fa,stroke:#000
+    style DB fill:#34d399,stroke:#000
+    style BY fill:#a78bfa,stroke:#000
+    style CR fill:#f472b6,stroke:#000
+    style TG fill:#22d3ee,stroke:#000
 ```
 
 - **cron-job.org** (free)
