@@ -61,64 +61,71 @@ Early results suggest they do. Small-cap altcoins show average |ρ| values that 
 
 ```mermaid
 flowchart TB
-    subgraph Sources["External Data Sources"]
-        Bybit["Bybit API<br/>Perp / Spot / Funding"]
-        CoinGecko["CoinGecko API<br/>Market Cap Tiers"]
-        TelegramAPI["Telegram Bot API"]
+    subgraph Sources["📡 Data Sources"]
+        B[Bybit API<br/>Perpetual + Spot + Funding]
+        C[CoinGecko API<br/>Market Cap Tiers]
     end
 
-    subgraph Triggers["Automation"]
-        Cron["cron-job.org<br/>Hourly + 8hr triggers"]
+    subgraph Automation["⏰ Automation"]
+        CRON[cron-job.org<br/>Hourly / 8-hour triggers]
     end
 
-    subgraph Backend["FastAPI Backend — Render"]
-        direction TB
-        Auto["/trigger/prices<br/>/trigger/funding"]
-        DataEP["/api/opportunities<br/>/api/coin/{symbol}<br/>/api/stats<br/>/api/history/{symbol}"]
-        Auth["Supabase JWT<br/>Auth Middleware"]
-        Webhook["/webhook/telegram<br/>Bot Commands"]
+    subgraph Backend["⚡ FastAPI Backend (Render, EU)"]
+        T1["/trigger/prices"]
+        T2["/trigger/funding"]
+        E1["/api/opportunities"]
+        E2["/api/coin/{symbol}"]
+        E3["/api/stats"]
+        E4["/api/history/{symbol}"]
+        E5["/webhook/telegram"]
+        AUTH["Supabase JWT Auth"]
     end
 
-    subgraph Pipeline["Data Pipeline (src/)"]
-        direction LR
-        Collect["collect_historical.py"]
-        Update["update_data.py"]
-        Rho["calculate_rho.py<br/>He et al. 2024"]
-        Alerts["telegram_alerts.py<br/>State Machine"]
+    subgraph Pipeline["🔧 Data Pipeline (src/)"]
+        HIST[collect_historical.py]
+        INC[update_data.py]
+        RHO[calculate_rho.py]
+        ALERT[telegram_alerts.py]
     end
 
-    subgraph Databases["Databases"]
-        direction TB
-        TSDB[("TimescaleDB<br/>perp_prices<br/>spot_prices<br/>funding_rates")]
-        Supabase[("Supabase PostgreSQL<br/>users<br/>user_alerts<br/>coin_universe")]
+    subgraph Database["🗄️ Supabase PostgreSQL"]
+        TS[(TimescaleDB Hypertables<br/>perp_prices, spot_prices<br/>funding_rates)]
+        META[(Metadata Tables<br/>coin_universe)]
+        USER[(User Tables<br/>users, user_alerts)]
     end
 
-    subgraph Frontend["Frontend"]
-        User["Dashboard / Coin Detail<br/>Research Page"]
+    subgraph Clients["👤 Clients"]
+        FE[React Dashboard<br/>perpscope.vercel.app]
+        TG[Telegram Bot<br/>Alerts & Commands]
     end
 
-    Bybit -->|"OHLCV + Funding"| Update
-    CoinGecko -->|"Market Cap Data"| Supabase
-    Cron -->|"HTTP POST"| Auto
-    Auto -->|"Runs"| Update
-    Update -->|"Inserts"| TSDB
-    Collect -->|"Seeds"| TSDB
-    
-    TSDB -->|"Query"| Rho
-    Rho -->|"rho + Signals"| DataEP
-    DataEP -->|"JSON"| User
-    
-    Supabase -->|"JWT Verify"| Auth
-    Auth -->|"User Data"| DataEP
-    
-    Alerts -->|"Open / Close / Intensify"| TelegramAPI
-    TSDB -->|"Trigger Check"| Alerts
-    
-    User -->|"Alert CRUD"| DataEP
-    DataEP -->|"Save"| Supabase
-    
-    TelegramAPI -->|"Chat ID"| Webhook
-    Webhook -->|"Update"| Supabase
+    B -->|OHLCV + Funding| HIST
+    B -->|Incremental| INC
+    C -->|Tier Classification| META
+    HIST -->|Seed| TS
+    INC -->|Hourly / 8hr| TS
+    RHO -->|ρ Deviation| E1
+    ALERT -->|Push| TG
+
+    CRON -->|POST| T1
+    CRON -->|POST| T2
+    T1 -->|Invoke| INC
+    T2 -->|Invoke| INC
+
+    TS -->|Query| E1
+    TS -->|Query| E2
+    TS -->|Query| E3
+    TS -->|Query| E4
+    META -->|Lookup| E1
+    USER -->|Auth| AUTH
+    USER -->|Alerts| ALERT
+
+    FE -->|GET| E1
+    FE -->|GET| E2
+    FE -->|GET| E3
+    FE -->|GET| E4
+    TG -->|POST| E5
+    E5 -->|Update| USER
 ```
 
 - **cron-job.org** (free)
