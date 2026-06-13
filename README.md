@@ -76,12 +76,15 @@ flowchart TD
     BE -->|JWT Verify| AUTH[Supabase Auth]
     BE -->|POST /webhook/telegram| TG[Telegram Bot]
 
-    style FE fill:#fbbf24,stroke:#000
-    style BE fill:#60a5fa,stroke:#000
-    style DB fill:#34d399,stroke:#000
-    style BY fill:#a78bfa,stroke:#000
-    style CR fill:#f472b6,stroke:#000
-    style TG fill:#22d3ee,stroke:#000
+    style FE fill:#1e293b,stroke:#94a3b8,color:#f8fafc
+    style BE fill:#1e3a8a,stroke:#60a5fa,color:#f8fafc
+    style DB fill:#064e3b,stroke:#34d399,color:#f8fafc
+    style BY fill:#581c87,stroke:#a78bfa,color:#f8fafc
+    style CR fill:#7f1d1d,stroke:#f87171,color:#f8fafc
+    style TG fill:#0e7490,stroke:#22d3ee,color:#f8fafc
+    style U fill:#374151,stroke:#9ca3af,color:#f8fafc
+    style AUTH fill:#374151,stroke:#9ca3af,color:#f8fafc
+    style DP fill:#374151,stroke:#9ca3af,color:#f8fafc
 ```
 
 - **cron-job.org** (free)
