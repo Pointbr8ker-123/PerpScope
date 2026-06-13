@@ -59,6 +59,70 @@ Early results suggest they do. Small-cap altcoins show average |ρ| values that 
 
 ### Architecture
 
+## Architecture
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e1f5fe', 'primaryTextColor': '#01579b', 'primaryBorderColor': '#0288d1', 'lineColor': '#0288d1', 'secondaryColor': '#fff3e0', 'tertiaryColor': '#e8f5e9'}}}%%
+flowchart TB
+    subgraph Sources["📡 External Data Sources"]
+        Bybit["Bybit API<br/>Perp / Spot / Funding"]
+        CoinGecko["CoinGecko API<br/>Market Cap Tiers"]
+        TelegramAPI["Telegram Bot API"]
+    end
+
+    subgraph Triggers["⏰ Automation"]
+        Cron["cron-job.org<br/>Hourly + 8hr triggers"]
+    end
+
+    subgraph Backend["⚡ FastAPI Backend — Render (Frankfurt)"]
+        direction TB
+        Auto["/trigger/prices<br/>/trigger/funding"]
+        DataEP["/api/opportunities<br/>/api/coin/{symbol}<br/>/api/stats<br/>/api/history/{symbol}"]
+        Auth["Supabase JWT<br/>Auth Middleware"]
+        Webhook["/webhook/telegram<br/>Bot Commands"]
+    end
+
+    subgraph Pipeline["🛠 Data Pipeline (src/)"]
+        direction LR
+        Collect["collect_historical.py"]
+        Update["update_data.py"]
+        Rho["calculate_rho.py<br/>He et al. (2024)"]
+        Alerts["telegram_alerts.py<br/>State Machine"]
+    end
+
+    subgraph Databases["🗄 Databases"]
+        direction TB
+        TSDB[("TimescaleDB<br/>perp_prices<br/>spot_prices<br/>funding_rates")]
+        Supabase[("Supabase PostgreSQL<br/>users<br/>user_alerts<br/>coin_universe")]
+    end
+
+    subgraph Frontend["🖥 Frontend"]
+        User["Dashboard / Coin Detail<br/>Research Page"]
+    end
+
+    Bybit -->|"OHLCV + Funding"| Update
+    CoinGecko -->|"Market Cap Data"| Supabase
+    Cron -->|"HTTP POST"| Auto
+    Auto -->|"Runs"| Update
+    Update -->|"Inserts"| TSDB
+    Collect -->|"Seeds"| TSDB
+    
+    TSDB -->|"Query"| Rho
+    Rho -->|"ρ + Signals"| DataEP
+    DataEP -->|"JSON"| User
+    
+    Supabase -->|"JWT Verify"| Auth
+    Auth -->|"User Data"| DataEP
+    
+    Alerts -->|"Open / Close / Intensify"| TelegramAPI
+    TSDB -->|"Trigger Check"| Alerts
+    
+    User -->|"Alert CRUD"| DataEP
+    DataEP -->|"Save"| Supabase
+    
+    TelegramAPI -->|"Chat ID"| Webhook
+    Webhook -->|"Update"| Supabase
+
 - **cron-job.org** (free)
   - Triggers price updates (hourly)
   - Triggers funding rate updates (every 8 hours)
@@ -83,7 +147,7 @@ Early results suggest they do. Small-cap altcoins show average |ρ| values that 
 - **Bybit API**
   - Source of all market data
   - Perpetual futures OHLCV, spot OHLCV, and 8-hour funding rates
-  - Covers 300+ USDT-margined altcoin contracts
+  - Covers ~300 USDT-margined altcoin contracts
 ---
 
 ## Repository Structure
