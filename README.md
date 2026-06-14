@@ -82,8 +82,7 @@ flowchart TD
     U([👤 User]) -->|Browser| FE[Cloudflare Pages<br/>perpscope-frontend.nwosudavid13.workers.dev]
     FE -->|GET /api/*| BE[FastAPI Backend<br/>Render — Frankfurt EU]
 
-    CR[cron-job.org<br/>Hourly / 8hr] -->|POST /trigger/prices| BE
-    CR -->|POST /trigger/funding| BE
+    CR[cron-job.org<br/>Hourly / 8hr] -->|POST /trigger/*| BE
 
     BE -->|Runs| DP[src/ Data Pipeline<br/>update_data.py]
     DP -->|Fetches OHLCV + Funding| BY[Bybit API<br/>~300 USDT contracts]
@@ -110,15 +109,18 @@ flowchart TD
   - Triggers funding rate updates (every 8 hours)
   - HTTP POST to FastAPI backend
 
-- **FastAPI Backend** (Render, Frankfurt EU)
-  - Data endpoints for frontend (`/api/opportunities`, `/api/coin/{symbol}`)
-  - Automation trigger endpoints (`/trigger/prices`, `/trigger/funding`)
-  - User authentication via Supabase JWT
-  - Telegram webhook for bot commands (`/webhook/telegram`)
+- **FastAPI Backend (Render, Frankfurt EU)**
+
+Entry point is `main.py`, which wires together five focused routers:
+- `analytics.py` — market data consumed by the frontend (`/api/*`)
+- `auth.py` — user accounts, JWT validation, and alert management (`/api/user/*`)
+- `automation.py` — cron triggers, price/funding pipelines, and health check (`/trigger/*`, `/health`)
+- `webhooks.py` — Telegram bot command handler (`/webhook/telegram`)
+- `debug.py` — runtime diagnostic checks (`/debug/*`)
 
 - **Databases**
-  - **TimescaleDB**: Time-series storage for perp prices, spot prices, funding rates
-  - **Supabase PostgreSQL**: User accounts, alert preferences, authentication
+  - **TimescaleDB (Archived)**: Time-series storage for perp prices, spot prices, funding rates 
+  - **Supabase PostgreSQL**: User accounts, alert preferences, authentication. Currently holds all the tables.
 
 - **Data Pipeline** (`src/`)
   - `collect_historical.py`: One-time historical data pull from Bybit
@@ -161,6 +163,13 @@ in `backend/database/timescale.py`, so the switch would be straightforward.
 perpscope/
 │
 ├── backend/                     # FastAPI backend (deployed on Render)
+│   ├── routers/                 # Split by domain
+│   │   ├── analytics.py         # Market data endpoints (/api/opportunities, /api/coin/*, etc.)
+│   │   ├── auth.py              # User auth, JWT, alerts, Telegram linking
+│   │   ├── automation.py        # Cron triggers (/trigger/prices, /trigger/funding) + health
+│   │   ├── webhooks.py          # Telegram bot webhook handler
+│   │   └── debug.py             # Diagnostic endpoints (/debug/*)
+|   |
 │   ├── database/
 │   │   ├── db_config.py         # Supabase and TimescaleDB urls
 │   │   ├── connection.py        # Supabase connection + pool
