@@ -74,7 +74,7 @@ Early results suggest they do. Small-cap altcoins show average |ρ| values that 
 
 ---
 
-### Architecture
+## Architecture
 
 ```mermaid
 flowchart TD
