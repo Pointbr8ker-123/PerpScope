@@ -1,9 +1,35 @@
+# backend/database/timescale.py
+#
+# ---------------------------------------------------------------
+# ARCHIVED — NOT ACTIVE IN PRODUCTION
+# ---------------------------------------------------------------
+#
+# This file is kept as a reference implementation for TimescaleDB
+# integration. It is NOT imported or used anywhere in the current
+# codebase.
+#
+# Current production database: Supabase PostgreSQL (connection.py)
+# All application code imports from database/connection.py
+#
+# When to reintroduce TimescaleDB:
+#   - Scaling beyond 500 monitored coins
+#   - Extending retention window beyond 1 year
+#   - Query performance becomes a bottleneck on standard PostgreSQL
+#
+# To reactivate:
+#   1. Provision a new TimescaleDB instance
+#   2. Set TIMESCALE_URL environment variable
+#   3. Run the migration script in scripts/migrate_to_supabase.py
+#      in reverse (or write a new migration)
+#   4. Update database/__init__.py to import from timescale.py
+
+
 import os
 import json
 import pandas as pd
 
 from backend.database.db_config import TIMESCALE_DATABASE_URL
-from backend.database.supabase import get_supabase_connection
+# from backend.database.supabase import get_connection
 from src.config import BASE_DIR, DATA_DIR, ALL_COINS
 from src.utils import log_info, log_err, log_warn, now_ms
 
@@ -12,96 +38,97 @@ import threading
 from contextlib import contextmanager
 from psycopg2.pool import ThreadedConnectionPool
 from psycopg2.extras import RealDictCursor, execute_values
+from backend.database.connection import get_connection
 
 
-_pool      = None
-_pool_lock = threading.Lock()
+# _pool      = None
+# _pool_lock = threading.Lock()
 
 
-def create_pool(min_connections=2, max_connections=5):
-    """
-    This function creates the connection pool for an update run.
-    It'd be called once at the start of the run_price_update() and 
-    run_funding_rates_update() functions in update_data.py
-    """
-    global _pool
+# def create_pool(min_connections=2, max_connections=5):
+#     """
+#     This function creates the connection pool for an update run.
+#     It'd be called once at the start of the run_price_update() and 
+#     run_funding_rates_update() functions in update_data.py
+#     """
+#     global _pool
 
-    with _pool_lock:
-        if _pool is not None:
-            log_warn("Pool already exists - skipping creation")
-            return
+#     with _pool_lock:
+#         if _pool is not None:
+#             log_warn("Pool already exists - skipping creation")
+#             return
         
-        _pool = ThreadedConnectionPool(
-            minconn=min_connections,
-            maxconn=max_connections,
-            dsn=TIMESCALE_DATABASE_URL,
-            cursor_factory=RealDictCursor
-        )
-        log_info(
-            f"Connection pool created "
-            f"(min={min_connections}, max={max_connections})"
-        )
+#         _pool = ThreadedConnectionPool(
+#             minconn=min_connections,
+#             maxconn=max_connections,
+#             dsn=TIMESCALE_DATABASE_URL,
+#             cursor_factory=RealDictCursor
+#         )
+#         log_info(
+#             f"Connection pool created "
+#             f"(min={min_connections}, max={max_connections})"
+#         )
 
 
-def close_pool():
-    """
-    This function closes all connections in the pool.
-    It'd be called once at the end of the run_price_update() and 
-    run_funding_rates_update() functions in update_data.py
-    """
-    global _pool
+# def close_pool():
+#     """
+#     This function closes all connections in the pool.
+#     It'd be called once at the end of the run_price_update() and 
+#     run_funding_rates_update() functions in update_data.py
+#     """
+#     global _pool
 
-    with _pool_lock:
-        if _pool is None:
-            return
-        _pool.closeall()
-        _pool = None
-        log_info("Connection pool closed")
+#     with _pool_lock:
+#         if _pool is None:
+#             return
+#         _pool.closeall()
+#         _pool = None
+#         log_info("Connection pool closed")
 
 
-@contextmanager
-def get_pooled_connection():
-    """
-    This function is a context manager that borrows a connection from
-    the pool, yields it for use, and returns it when its done.
-    """
-    if _pool is None:
-        raise RuntimeError(
-            "Connection pool is not initialized "
-            "Call create_pool() before using get_pooled_connection()"
-        )
+# @contextmanager
+# def get_pooled_connection():
+#     """
+#     This function is a context manager that borrows a connection from
+#     the pool, yields it for use, and returns it when its done.
+#     """
+#     if _pool is None:
+#         raise RuntimeError(
+#             "Connection pool is not initialized "
+#             "Call create_pool() before using get_pooled_connection()"
+#         )
     
-    conn = None
-    try:
-        conn = _pool.getconn()
-        yield conn
-    except Exception:
-        if conn:
-            try:
-                conn.rollback()
-            except Exception:
-                pass
-        raise
-    finally:
-        if conn and _pool:
-            _pool.putconn(conn)
+#     conn = None
+#     try:
+#         conn = _pool.getconn()
+#         yield conn
+#     except Exception:
+#         if conn:
+#             try:
+#                 conn.rollback()
+#             except Exception:
+#                 pass
+#         raise
+#     finally:
+#         if conn and _pool:
+#             _pool.putconn(conn)
 
 
-def get_connection():
-    """
-    This function connects to TimescaleDB  for time-series data.
+# def get_connection():
+#     """
+#     This function connects to TimescaleDB  for time-series data.
 
-    Used by: calculate_rho.py, update_data.py, main.py data endpoints
+#     Used by: calculate_rho.py, update_data.py, main.py data endpoints
     
-    Tables here: funding_rates, perp_prices, spot_prices,
-                coin_universe, collection_progress
+#     Tables here: funding_rates, perp_prices, spot_prices,
+#                 coin_universe, collection_progress
 
-    Returns a non-pooled connection.
-    """
-    return psycopg2.connect(
-        TIMESCALE_DATABASE_URL,
-        cursor_factory=RealDictCursor
-    )
+#     Returns a non-pooled connection.
+#     """
+#     return psycopg2.connect(
+#         TIMESCALE_DATABASE_URL,
+#         cursor_factory=RealDictCursor
+#     )
 
 
 def create_timescale_tables():
@@ -413,51 +440,51 @@ def create_timescale_tables():
 
     log_info(f"\nTimescaleDB Setup complete... All tables created successfully!!!")
 
+from io import StringIO
 def populate_coin_universe_table(coins):
-    """
-    This inserts coin metadata in the coin_universe database table.
-    """
+    """Fast seed using COPY. Truncates table first since this is a full refresh."""
     if not coins:
         return 0
-    
-    sql = """
-            INSERT INTO coin_universe (
-                symbol, name, coingecko_id, market_cap, 
-                market_cap_rank, market_cap_tier, has_spot_market,
-                is_active, last_updated)
-            VALUES
-                (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
-            ON CONFLICT (symbol) DO UPDATE SET
-                name                = EXCLUDED.name,
-                coingecko_id        = EXCLUDED.coingecko_id,
-                market_cap          = EXCLUDED.market_cap,
-                market_cap_rank     = EXCLUDED.market_cap_rank,
-                market_cap_tier     = EXCLUDED.market_cap_tier,
-                has_spot_market     = EXCLUDED.has_spot_market,
-                is_active           = EXCLUDED.is_active,
-                last_updated        = NOW()
-        """
-    
-    rows = [
-        (
-            c['symbol'],
-            c.get('name', ''),
-            c.get('coingecko_id', ''),
-            c.get('market_cap', 0),
-            c.get('market_cap_rank', 9999),
-            c.get('market_cap_tier', 'Unknown'),
-            c.get('has_spot_market', True),
-            c.get('is_active', True)
-        )
-        for c in coins
-    ]
 
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.executemany(sql, rows)
+            # 1. Clear existing data (we're doing a full refresh from JSON)
+            cur.execute("TRUNCATE TABLE coin_universe")
+
+            # 2. Build a TSV buffer in memory
+            buffer = StringIO()
+            for c in coins:
+                # Escape tabs/newlines so they don't break the TSV format
+                name = c.get('name', '').replace('\t', ' ').replace('\n', ' ')
+                cg_id = c.get('coingecko_id', '').replace('\t', ' ').replace('\n', ' ')
+
+                buffer.write('\t'.join([
+                    c['symbol'],
+                    name,
+                    cg_id,
+                    str(c.get('market_cap', 0)),
+                    str(c.get('market_cap_rank', 9999)),
+                    c.get('market_cap_tier', 'Unknown'),
+                    'true',   # has_spot_market
+                    'true',   # is_active
+                    'NOW()'   # last_updated
+                ]) + '\n')
+
+            # 3. COPY from the buffer into the table
+            buffer.seek(0)
+            cur.copy_from(
+                buffer,
+                'coin_universe',
+                columns=(
+                    'symbol', 'name', 'coingecko_id', 'market_cap',
+                    'market_cap_rank', 'market_cap_tier', 'has_spot_market',
+                    'is_active', 'last_updated'
+                )
+            )
+
         conn.commit()
 
-    return len(rows)
+    return len(coins)
 
 
 def seed_coin_universe_table_from_json(json_path=None):
@@ -707,7 +734,7 @@ def migrate_tables(source_table, dest_table, columns, use_time_filter=True):
             ORDER BY symbol ASC
         """
 
-    with get_supabase_connection() as conn:
+    with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(select_sql)
             rows = cur.fetchall()
@@ -780,12 +807,12 @@ def run_migration():
 if __name__ == "__main__":
     # create_timescale_tables()
 
-    # seed_coin_universe_table_from_json()
+    seed_coin_universe_table_from_json()
 
     # insert_funding_rates()
 
     # insert_prices('perp_prices', 'perp_prices', 'perp_hourly', days=30)
 
-    insert_prices('spot_prices', 'spot_prices', 'spot_hourly', days=30)
+    # insert_prices('spot_prices', 'spot_prices', 'spot_hourly', days=30)
 
     # run_migration()
