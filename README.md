@@ -397,3 +397,27 @@ Interactive docs at `http://localhost:8000/docs`.
 
 **Note:** The container connects to your Supabase database via
 the `DATABASE_URL` in your `.env` file. No local database setup needed.
+
+---
+
+## Acknowledgements
+
+**Research:**
+- He, Z., Manela, A., Ross, O., & von Wachter, V. (2024). *Fundamentals
+  of Perpetual Futures.* SSRN 4301150 — the mathematical foundation for
+  all ρ calculations in this project.
+- Inan, A. (2025). *Predictability of Funding Rates.* SSRN 5576424 —
+  motivation for the DAR predictive model (planned).
+
+**Tools and infrastructure:**
+- [Bybit API](https://bybit-exchange.github.io/docs/) — market data source
+- [Supabase](https://supabase.com) — database and authentication
+- [TimescaleDB](https://console.cloud.timescale.com) - time-series database
+- [Render](https://render.com) — backend hosting
+- [Cloudlfare Pages](https://pages.cloudflare.com) — frontend hosting
+- [Lovable](https://lovable.dev) — frontend UI generation (see note below)
+- [cron-job.org](https://cron-job.org) — scheduled automation
+
+---
+
+*PerpScope is a research tool. Nothing on this platform is financial advice.*
