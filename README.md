@@ -140,7 +140,7 @@ data, user accounts, and alerts.
 I actually started with a split setup: time-series price data went into 
 TimescaleDB, while user data stayed in Supabase. Why? Because Supabase's 
 free tier only gives you 500MB, which filled up fast. But once I added 
-the 90-day data retention policy, storage wasn't a problem anymore.
+the 90-day data retention mechanism, storage wasn't a problem anymore.
 
 I kept running both databases for a while, but then I found out 
 TimescaleDB's free tier only lasts a month. So I consolidated everything 
