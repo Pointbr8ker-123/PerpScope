@@ -132,7 +132,7 @@ flowchart TD
 
 
 
-**Architecture Decision: Single Database**
+### Architecture Decision: Single Database
 
 PerpScope currently uses a single Supabase PostgreSQL database for everything — price 
 data, user accounts, and alerts.
