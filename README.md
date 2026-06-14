@@ -14,6 +14,7 @@
 2. [Features](#features)
 3. [Research Foundation](#research-foundation)
 4. [Architecture](#architecture)
+  - [Architecture Decision: Single Database](#architecture-decision-single-database)
 5. [Repository Structure](#repository-structure)
 6. [Alert System Design](#alert-system-design)
 7. [Running Locally](#running-locally)
