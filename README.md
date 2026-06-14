@@ -111,12 +111,12 @@ flowchart TD
 
 - **FastAPI Backend (Render, Frankfurt EU)**
 
-Entry point is `main.py`, which wires together five focused routers:
-- `analytics.py` — market data consumed by the frontend (`/api/*`)
-- `auth.py` — user accounts, JWT validation, and alert management (`/api/user/*`)
-- `automation.py` — cron triggers, price/funding pipelines, and health check (`/trigger/*`, `/health`)
-- `webhooks.py` — Telegram bot command handler (`/webhook/telegram`)
-- `debug.py` — runtime diagnostic checks (`/debug/*`)
+  Entry point is `main.py`, which wires together five focused routers:
+    - `analytics.py` — market data consumed by the frontend (`/api/*`)
+    - `auth.py` — user accounts, JWT validation, and alert management (`/api/user/*`)
+    - `automation.py` — cron triggers, price/funding pipelines, and health check (`/trigger/*`, `/health`)
+    - `webhooks.py` — Telegram bot command handler (`/webhook/telegram`)
+    - `debug.py` — runtime diagnostic checks (`/debug/*`)
 
 - **Databases**
   - **TimescaleDB (Archived)**: Time-series storage for perp prices, spot prices, funding rates 
