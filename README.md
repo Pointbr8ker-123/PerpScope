@@ -130,6 +130,8 @@ flowchart TD
   - Perpetual futures OHLCV, spot OHLCV, and 8-hour funding rates
   - Covers ~300 USDT-margined altcoin contracts
 
+
+
 ### Architecture Decision: Single Database
 
 PerpScope currently uses a single Supabase PostgreSQL database for everything — price 
