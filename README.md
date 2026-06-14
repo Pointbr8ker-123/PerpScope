@@ -8,7 +8,25 @@
 
 ---
 
-## How PerpScope Works
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Research Foundation](#research-foundation)
+4. [Architecture](#architecture)
+5. [Repository Structure](#repository-structure)
+6. [Alert System Design](#alert-system-design)
+7. [Running Locally](#running-locally)
+8. [Environment Variables](#environment-variables)
+9. [Frontend](#frontend)
+10. [Architecture Decision: Single Database](#architecture-decision-single-database)
+11. [Roadmap and Future Work](#roadmap-and-future-work)
+12. [Contributing](#contributing)
+13. [Docker](#docker)
+
+---
+
+## Overview
 
 PerpScope monitors the gap between perpetual futures prices and their
 theoretical no-arbitrage fair values accross ~300 altcoins on Bybit.
