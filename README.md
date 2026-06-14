@@ -14,7 +14,6 @@
 2. [Features](#features)
 3. [Research Foundation](#research-foundation)
 4. [Architecture](#architecture)
-  - [Architecture Decision: Single Database](#architecture-decision-single-database)
 5. [Repository Structure](#repository-structure)
 6. [Alert System Design](#alert-system-design)
 7. [Running Locally](#running-locally)
@@ -133,7 +132,7 @@ flowchart TD
 
 
 
-### Architecture Decision: Single Database
+**Architecture Decision: Single Database**
 
 PerpScope currently uses a single Supabase PostgreSQL database for everything — price 
 data, user accounts, and alerts.
