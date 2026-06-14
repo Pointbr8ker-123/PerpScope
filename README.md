@@ -22,6 +22,7 @@
 10. [Roadmap and Future Work](#roadmap-and-future-work)
 11. [Contributing](#contributing)
 12. [Docker](#docker)
+13. [Acknowledgements](#acknowledgements)
 
 ---
 
@@ -420,4 +421,4 @@ the `DATABASE_URL` in your `.env` file. No local database setup needed.
 
 ---
 
-*PerpScope is a research tool. Nothing on this platform is financial advice.*
+> *PerpScope is a research tool. Nothing on this platform is financial advice.*
