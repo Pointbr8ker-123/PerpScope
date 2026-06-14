@@ -19,10 +19,9 @@
 7. [Running Locally](#running-locally)
 8. [Environment Variables](#environment-variables)
 9. [Frontend](#frontend)
-10. [Architecture Decision: Single Database](#architecture-decision-single-database)
-11. [Roadmap and Future Work](#roadmap-and-future-work)
-12. [Contributing](#contributing)
-13. [Docker](#docker)
+10. [Roadmap and Future Work](#roadmap-and-future-work)
+11. [Contributing](#contributing)
+12. [Docker](#docker)
 
 ---
 
@@ -130,6 +129,27 @@ flowchart TD
   - Source of all market data
   - Perpetual futures OHLCV, spot OHLCV, and 8-hour funding rates
   - Covers ~300 USDT-margined altcoin contracts
+
+### Architecture Decision: Single Database
+
+PerpScope currently uses a single Supabase PostgreSQL database for everything — price 
+data, user accounts, and alerts.
+
+I actually started with a split setup: time-series price data went into 
+TimescaleDB, while user data stayed in Supabase. Why? Because Supabase's 
+free tier only gives you 500MB, which filled up fast. But once I added 
+the 90-day data retention policy, storage wasn't a problem anymore.
+
+I kept running both databases for a while, but then I found out 
+TimescaleDB's free tier only lasts a month. So I consolidated everything 
+into Supabase before the TimescaleDB expired and broke the system.
+
+Turns out, standard PostgreSQL with good indexing handles our current 
+needs just fine — ~300 coins, a 90-day rolling window, about 150MB total data.
+
+If PerpScope ever grow past 500 coins or need to keep data for more than a 
+year, we can bring TimescaleDB back. The old connection code is still sitting 
+in `backend/database/timescale.py`, so the switch would be straightforward.
 
 ---
 
@@ -291,29 +311,6 @@ built the React components from that.
 
 The frontend connects to the FastAPI backend via the endpoints 
 documented at `/docs` on the running server.
-
----
-
-## Architecture Decision: Single Database
-
-PerpScope uses a single Supabase PostgreSQL database for everything — price 
-data, user accounts, and alerts.
-
-I actually started with a split setup: time-series price data went into 
-TimescaleDB, while user data stayed in Supabase. Why? Because Supabase's 
-free tier only gives you 500MB, which filled up fast. But once I added 
-the 90-day data retention policy, storage wasn't a problem anymore.
-
-I kept running both databases for a while, but then I found out 
-TimescaleDB's free tier only lasts a month. So I consolidated everything 
-into Supabase before the TimescaleDB expired and broke the system.
-
-Turns out, standard PostgreSQL with good indexing handles our current 
-needs just fine — ~300 coins, a 90-day rolling window, about 150MB total data.
-
-If PerpScope ever grow past 500 coins or need to keep data for more than a 
-year, we can bring TimescaleDB back. The old connection code is still sitting 
-in `backend/database/timescale.py`, so the switch would be straightforward.
 
 ---
 
