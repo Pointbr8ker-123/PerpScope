@@ -1,3 +1,16 @@
+"""
+get_universe.py - Bybit perpetual universe discovery for Perpscope
+
+This script fetches all active USDT-margined perpetual futures from Bybit, checks
+if they have a spot market and classified them into:
+    - research_universe: coins listed for 18+ months (i.e sufficient history for backtesting)
+    - product_universe: all the coins that have both perp and spot markets
+
+Run this script periodically to keep the coin universe up to date
+
+Chore: Automate this script so that it runs periodically without having to manually do so.
+"""
+
 import requests
 import json
 import os
@@ -45,6 +58,7 @@ def get_all_linear_perpetuals():
                         "status": item['status']
                     })
 
+            # Bybit's pagination: nextPageCursor is empty when we reach the end
             next_cursor = data['result'].get('nextPageCursor', '')
             if not next_cursor:
                 break
@@ -61,6 +75,7 @@ def get_all_linear_perpetuals():
 def get_all_spot_symbols():
     """
     This function gets every active spot trading pair.
+    Returns a set of symbol strings (e.g {'BTCUSDT', 'ETHUSDT', ...}).
     We use this to check which perpetuals also have a spot market.
     """
 
@@ -121,13 +136,15 @@ def classify_coins(perpetuals, spot_symbols):
         else:
             the_rest.append(symbol)
 
+    # NB: Product universe includes everything that made it past the spot filter
     product_universe = research_universe + the_rest
     return research_universe, product_universe
 
 
 def save_universe(research, product):
     """
-    This function saves the coin universe to a JSON file so config.py can load it.
+    This function saves the coin lists to "coin_universe.json".
+    This file is loaded by config.py when the data pipeline runs.
     """
 
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
