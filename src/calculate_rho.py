@@ -1,3 +1,5 @@
+# calculate_rho.py - Core Perpscope Feature
+# 
 # This script implements the rho(ρ) deviation measure from He, Manela,
 # Ross, and von Watcher (2024) "Fundamentals of Perpetual Futures"
 
@@ -97,6 +99,7 @@ def get_signal(rho, threshold_tier='high'):
     if np.isnan(rho):
         return 'NEUTRAL'
     
+    # defualt threshold is 'high' since PerpScope is focused on retail traders
     threshold = THRESHOLDS.get(threshold_tier, THRESHOLDS['high'])
 
     if rho > threshold:
@@ -206,9 +209,10 @@ def  get_historical_rho(symbol, days=90):
 def calculate_current_opportunities(threshold_tier='high'):
     """
     This is the main function that the app's dashboard leaderboard calls.
+
     It fetches current prices for all the coins, computes rho, attaches 
     market cap metadata from MARKET_CAP_LOOKUP, and returns a sorted Dataframe
-    with opportunities ranked first (i.e largest |rho| at the top).
+    with opportunities ranked (i.e largest |rho| at the top).
     """
     prices_df = get_latest_prices()
 
@@ -315,9 +319,5 @@ def get_market_cap_comparison_data(days=90):
 
 
 if __name__ == "__main__":
-    print("Testing ρ calculation...")
-
-    test_rho = calculate_rho(101_000, 100_000)
-    print(f"BTC test (1% premium): ρ = {test_rho:.4f} ({test_rho*100:.2f}% annualized)")
-    print(f"Signal: {get_signal(test_rho)}")
-
+    ...
+    # NB: run "python3 test_calculate_rho.py" to test the calculate_rho function
