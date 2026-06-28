@@ -1,3 +1,13 @@
+"""
+collect_historical.py - Bybit historical data collection
+
+This script fetches historical funding rate and candlestick (time-series) 
+data from Bybit for all coins in the product universe.
+
+The collected data feeds into the Perpscope database pipeline via update_data.py
+which handles periodical updates.
+"""
+
 import json
 import os
 import pandas as pd
@@ -19,9 +29,8 @@ from src.utils import date_to_ms, now_ms, log_info, log_warn, log_err
 # ----------------------FUNDING RATE--------------------------------------------
 def fetch_funding_rates_page(symbol, start_ms, end_ms, limit=200):
     """
-    This function fetches one page of the funding rate history
-    of a particular coin and returns a list of records or None if
-    the request failed.
+    This function fetches one page of the funding rate history for a symbol.
+    Returns a list of records or None if the request failed.
     """
     url = f"{BASE_URL}/v5/market/funding/history"
     params = {
@@ -82,7 +91,8 @@ def collect_funding_rates(symbol, start_ms=None):
     all_records = []
     curr_start = start_ms
 
-    # Funding rate interval for 8hrs with a limit of 200 records for each page
+    # Funding rate intervals are exactly 8hrs. Bybit returns at most 200
+    # records per page. Therefore, 200 * 8hrs = 66.6 days of data per page.
     page_size_ms = 200 * 8 * 60 * 60 * 1000
 
     while curr_start < end_ms:
@@ -292,7 +302,7 @@ def collect_single_coin(symbol):
     """
     try:
         time.sleep(random.uniform(0.1, 0.5))
-        # n_f = collect_funding_rates(symbol)
+        n_f = collect_funding_rates(symbol)
         n_p = collect_klines(symbol, 'linear')
         n_s = collect_klines(symbol, 'spot')
         total = n_s + n_p

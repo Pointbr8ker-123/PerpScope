@@ -85,9 +85,10 @@ TIER_LABELS = {
 }
 
 def get_coin_metadata():
-    """This function would focus on returning a dict consisting of metadata of 
-    large_cap and mid_cap coins for now at this MVP level due to database 
-    restrictions"""
+    """
+    Returns a dict consisting of metadata for large_cap 
+    and mid_cap coins.
+    """
     with open(MARKET_CAP_CLASSIFICATION, 'r') as f:
         data = json.load(f)
 
