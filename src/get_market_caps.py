@@ -1,3 +1,12 @@
+"""
+get_market_caps.py - Bybit market cap classifier
+
+This script fetches market rankings from Coingecko and classifies
+the altcoin universe into Large/Mid/Small cap tiers. The classification
+is used in the research view to compare mispricing behaviour across different
+market cap segments
+"""
+
 import requests
 import json
 import os
@@ -75,6 +84,8 @@ def build_ranking_lookup(coingecko_coins):
         cg_symbol = coin['symbol'].upper()
         cg_id = coin['id']
 
+        # CoinGecko uses "BTC" while Bybit uses "BTCUSDT"
+        # This helps map one to the other so we can match market cap data
         bybit_symbol = cg_symbol + 'USDT'
 
         if bybit_symbol in lookup:
@@ -197,16 +208,6 @@ def run_classification():
     large, mid, small, unmatched = classify_by_market_cap(
         lookup, product_universe
     )
-
-    # matched_symbols = [s for s in product_universe if s in lookup]
-    # log_info(f"Fetching launch times for {len(matched_symbols)} matched coins...")
-
-    # for i, symbol in enumerate(matched_symbols):
-    #     cg_id = lookup[symbol]['coingecko_id']
-    #     launch_ms = fetch_launch_time_ms(cg_id)
-    #     lookup[symbol]['launch_time_ms'] = launch_ms
-    #     log_info(f"[{i+1}/{len(matched_symbols)}] {symbol}: {launch_ms}")
-    #     time.sleep(2)
     
     # Save results
     save_market_cap_classification(lookup, large, mid, small, unmatched)
