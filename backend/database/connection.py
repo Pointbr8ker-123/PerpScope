@@ -1,3 +1,14 @@
+# connection.py - Thread-safe connection pooling for the PerpScope data pipeline
+#
+# The update script processes 300+ coins with multiple workers. Without pooling,
+# each worker would open a new connection per coin, causing:
+# - Connection churn (300+ connections per update run)
+# - Risk of hitting Supabase's connection limit
+# - Slower performance (each connection handshake takes time)
+#
+# This module provides a shared pool that workers borrow from and return to,
+# ensuring we never exceed 5 concurrent connections.
+
 import psycopg2
 import threading
 from psycopg2.pool import ThreadedConnectionPool
@@ -25,10 +36,15 @@ def create_pool(min_connections=2, max_connections=5):
             return
         
         _pool = ThreadedConnectionPool(
+            # ThreadedConnectionPool is safer to use in this context than 
+            # SimpleConnectionPool in order to avoid random errors when 
+            # multiple threads borrow connections.
             minconn=min_connections,
             maxconn=max_connections,
             dsn=SUPABASE_DATABASE_URL,
-            cursor_factory=RealDictCursor
+            cursor_factory=RealDictCursor 
+            # RealDictCursor return rows as dictionaries which matches 
+            # with what the rest of the codebase expects.
         )
         log_info(
             f"Connection pool created "
@@ -71,23 +87,24 @@ def get_pooled_connection():
     except Exception:
         if conn:
             try:
+                # rollback any open transactions to prevent it from
+                # lingering and blocking other operations.
                 conn.rollback()
             except Exception:
                 pass
         raise
     finally:
         if conn and _pool:
+            # Always return the connetion whether there was
+            # an error not not. If we don't, the pool will
+            # eventually exhaust and the script will hang
             _pool.putconn(conn)
 
 
 def get_connection():
     """
-    This function connects to TimescaleDB  for time-series data.
-
-    Used by: calculate_rho.py, update_data.py, main.py data endpoints
-    
-    Tables here: funding_rates, perp_prices, spot_prices,
-                coin_universe, collection_progress
+    This function connects to our Supabase database for time-series 
+    and user management data.
 
     Returns a non-pooled connection.
     """
