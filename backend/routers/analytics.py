@@ -4,13 +4,13 @@
 # All endpoints are public — no authentication required.
 #
 # Endpoints:
-#   GET /api/stats                    -> dashboard summary metrics
-#   GET /api/opportunities            -> ranked opportunity table
-#   GET /api/coins                    -> full coin list for dropdowns
-#   GET /api/coin/{symbol}            -> single coin current detail
-#   GET /api/history/{symbol}         -> historical ρ for charts
-#   GET /api/funding/{symbol}         -> funding rate history for charts
-#   GET /api/research/summary         -> cross-sectional tier analysis
+#   GET /api/stats            -> dashboard summary metrics
+#   GET /api/opportunities    -> ranked opportunity table
+#   GET /api/coins            -> full coin list for dropdowns
+#   GET /api/coin/{symbol}    -> single coin current detail
+#   GET /api/history/{symbol} -> historical ρ for charts
+#   GET /api/funding/{symbol} -> funding rate history for charts
+#   GET /api/research/summary -> cross-sectional tier analysis
 
 
 import math
@@ -31,6 +31,8 @@ from src.utils import log_err, log_warn, log_info
 router = APIRouter(prefix="/api", tags=["analytics"])
 
 # -------------------------------- MARKET CAP DATA --------------------------------------
+
+# Map database tier names to frontend tier names for consistency
 TIER_MAP_DB_TO_UI = {
     'large_cap': 'LARGE',
     'mid_cap': 'MID', 
@@ -40,7 +42,12 @@ TIER_MAP_DB_TO_UI = {
 
 def load_market_cap_data():
     """
-    This function loads market cap classification from the database
+    Loads market cap classification from the coin_universe table.
+    Maps database tier names ('large_cap', 'mid_cap', 'small_cap') to
+    UI-friendly names ('LARGE', 'MID', 'SMALL') and populates the
+    global MARKET_CAP_LOOKUP and ALL_COINS used by all endpoints.
+
+    Falls back to config.py data if the database query fails.
     """
     try:
         with get_connection() as conn:
@@ -90,7 +97,9 @@ async def lifespan(app: FastAPI):
 
 def get_coin_metadata(symbol):
     """
-    This function returns market cap metadata for one coin.
+    Returns market cap metadata for a single coin from the global lookup.
+    Returns default values (SMALL tier, rank 9999, symbol as name) if
+    the coin isn't found in MARKET_CAP_LOOKUP.
     """
     return MARKET_CAP_LOOKUP.get(symbol, {
         'tier': 'SMALL',
@@ -592,6 +601,8 @@ async def get_research_summary(days=Query(default=90)):
         elif tier == "LARGE":
             large_rhos = values
     
+    # Calculate ratio of average |ρ| for Small vs Large cap coins.
+    # This is the key research finding: small caps show larger deviations.
     ratio_small_large = 1.0
     if large_rhos and small_rhos:
         ratio_small_large = round(np.mean(small_rhos) / np.mean(large_rhos), 4)
