@@ -87,6 +87,35 @@ def create_supabase_tables():
             CREATE INDEX IF NOT EXISTS idx_alert_state_user
             ON alert_state (user_id, state)
             """
+        ),
+
+        # Historical Universe Table
+        (
+            "historical_universe table",
+            """
+            CREATE TABLE IF NOT EXISTS historical_universe (
+                id              BIGSERIAL   PRIMARY KEY,
+                snapshot_date   TIMESTAMPTZ NOT NULL,
+                symbol          VARCHAR(20) NOT NULL,
+                status          VARCHAR(20) NOT NULL,
+                launch_time_ms  BIGINT,
+                UNIQUE (snapshot_date, symbol)
+            );
+            """
+        ),
+        (
+            "create idx_historical_universe_symbol_date index",
+            """
+            CREATE INDEX IF NOT EXISTS idx_historical_universe_symbol_date 
+                ON historical_universe (symbol, snapshot_date DESC)
+            """
+        ),
+        (
+            "create idx_historical_universe_date index",
+            """
+            CREATE INDEX IF NOT EXISTS idx_historical_universe_date 
+                ON historical_universe (snapshot_date)
+            """
         )
     ]
 
@@ -131,8 +160,8 @@ def add_column(table_name, column_name, data_type):
 
 
 if __name__ == "__main__":
-    # create_supabase_tables()
+    create_supabase_tables()
 
     # alter_table("user_alerts", "alter_channel", "alert_channel")
 
-    add_column("users", "telegram_chat_id", "VARCHAR(50)")
+    # add_column("users", "telegram_chat_id", "VARCHAR(50)")
