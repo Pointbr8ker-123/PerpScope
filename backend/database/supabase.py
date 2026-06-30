@@ -99,6 +99,7 @@ def create_supabase_tables():
                 symbol          VARCHAR(20) NOT NULL,
                 status          VARCHAR(20) NOT NULL,
                 launch_time_ms  BIGINT,
+                quote_coin      VARCHAR(10),
                 UNIQUE (snapshot_date, symbol)
             );
             """
