@@ -12,11 +12,8 @@
 #   GET /api/funding/{symbol} -> funding rate history for charts
 #   GET /api/research/summary -> cross-sectional tier analysis
 
-import os
-import json
-import math
 import numpy as np
-from fastapi import FastAPI, APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from backend.database.connection import get_connection
 from src.calculate_funding import annualize_funding_rate, get_funding_signal
 from src.calculate_rho import (
@@ -25,143 +22,11 @@ from src.calculate_rho import (
     THRESHOLDS,
     KAPPA, IOTA, GAMMA, RISK_FREE_RATE_8HR, PERIODS_PER_YEAR
 )
-from src.config import BASE_DIR
-from src.utils import log_err, log_warn, log_info
+from src.utils import log_err, sanitize_floats
+from backend.database.db_config import get_coin_metadata, get_all_symbols
 
 
 router = APIRouter(prefix="/api", tags=["analytics"])
-
-# -------------------------------- MARKET CAP DATA --------------------------------------
-
-# Map database tier names to frontend tier names for consistency
-TIER_MAP_DB_TO_UI = {
-    'large_cap': 'LARGE',
-    'mid_cap': 'MID', 
-    'small_cap': 'SMALL',
-    'Unknown': 'SMALL'
-}
-
-ALL_SYMBOLS = []
-MARKET_CAP_LOOKUP = {}
-
-
-def _fallback_load_from_json():
-    """
-    Emergency fallback — reads from the deprecated
-    market_cap_classification.json if database is unreachable.
-    This file is stale and not kept in sync automatically.
-    Prefer fixing the database connection over relying on this.
-    """
-    json_path = os.path.join(BASE_DIR, 'market_cap_classification.json')
-    if not os.path.exists(json_path):
-        log_warn("JSON fallback file not found — MARKET_CAP_LOOKUP stays empty")
-        return
-
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-
-    for tier_key, ui_tier in TIER_MAP_DB_TO_UI.items():
-        for coin in data.get(tier_key, []):
-            MARKET_CAP_LOOKUP[coin['symbol']] = {
-                'tier': ui_tier,
-                'rank': coin.get('rank', 9999),
-                'name': coin.get('name', coin['symbol'])
-            }
-
-    log_warn(
-        f"Loaded {len(MARKET_CAP_LOOKUP)} coins from deprecated JSON fallback. "
-        f"Run get_market_caps.py to refresh coin_universe table."
-    )
-
-
-def load_market_cap_data():
-    """
-    Loads coin metadata from coin_universe table into MARKET_CAP_LOOKUP 
-    and ALL_SYMBOLS.
-
-    Called once at FastAPI startup via the @app.on_event('startup')
-    handler in main.py. All endpoints read from MARKET_CAP_LOOKUP
-    via get_coin_metadata() rather than hitting the database per-request.
-    """
-    global MARKET_CAP_LOOKUP, ALL_SYMBOLS
-
-    # Clear in case this is called on a hot-reload
-    MARKET_CAP_LOOKUP.clear()
-    ALL_SYMBOLS.clear()
-
-    try:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT symbol, name, market_cap_rank, market_cap_tier
-                    FROM coin_universe
-                    WHERE is_active = true
-                    ORDER BY market_cap_rank ASC NULLS LAST
-                """)
-                rows = cur.fetchall()
-
-        if not rows:
-            log_warn("coin_universe table is empty — run get_market_caps.py")
-            _fallback_load_from_json()
-            return
-
-        for row in rows:
-            db_tier = row['market_cap_tier'] or 'Unknown'
-            ui_tier = TIER_MAP_DB_TO_UI.get(db_tier, 'SMALL')
-
-            MARKET_CAP_LOOKUP[row['symbol']] = {
-                'tier': ui_tier,
-                'rank': row['market_cap_rank'] or 9999,
-                'name': row['name'] or row['symbol'].replace('USDT', '')
-            }
-            ALL_SYMBOLS.append(row['symbol'])
-
-        log_info(f"Loaded {len(MARKET_CAP_LOOKUP)} coins from database")
-
-    except Exception as e:
-        log_err(f"Database load failed: {e} — attempting JSON fallback")
-        _fallback_load_from_json()
-
-
-async def lifespan(app: FastAPI):
-    # startup
-    log_info("PerpScope API starting up...")
-    load_market_cap_data()
-    log_info("Startup complete!")
-
-    yield
-
-    # shutdown
-    log_info("Cleaning up...")
-
-
-def get_coin_metadata(symbol):
-    """
-    Returns market cap metadata for a single coin from the global lookup.
-    Returns default values (SMALL tier, rank 9999, symbol as name) if
-    the coin isn't found in MARKET_CAP_LOOKUP.
-    """
-    return MARKET_CAP_LOOKUP.get(symbol, {
-        'tier': 'SMALL',
-        'rank': 9999,
-        'name': symbol.replace('USDT', '')
-    })
-
-
-def sanitize_floats(val):
-    """
-    This function recursively replaces NaN and inf values with None in a list
-    or dict or if its a single float value before FastAPI receives it.
-    """
-    if isinstance(val, dict):
-        return {k: sanitize_floats(v) for k, v in val.items()}
-    elif isinstance(val, list):
-        return [sanitize_floats(v) for v in val]
-    elif isinstance(val, float):
-        if math.isnan(val) or math.isinf(val):
-            return None
-        return val
-    return val
 
 
 # --------------------------- ENDPOINTS -----------------------------------------
@@ -172,7 +37,7 @@ async def get_all_coins():
     """
     coins = []
     
-    for symbol in ALL_SYMBOLS:
+    for symbol in get_all_symbols():
         metadata = get_coin_metadata(symbol)
         coins.append({
             'symbol': symbol,

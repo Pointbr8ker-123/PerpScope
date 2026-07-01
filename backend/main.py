@@ -16,12 +16,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.utils import log_info
 from backend.routers import analytics, auth, automation, debug, webhooks
+from backend.database.db_config import load_market_cap_data
 
 # -------------------------------------- APP SETUP ----------------------------------------------
 async def lifespan(app: FastAPI):
     # startup
     log_info("PerpScope API starting up...")
-    analytics.load_market_cap_data()
+    load_market_cap_data()
     log_info("Startup complete!")
 
     yield
