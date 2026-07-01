@@ -1,7 +1,5 @@
 import json
 import os
-from backend.database.connection import get_connection
-
 
 # File Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -72,6 +70,8 @@ def get_product_universe(top_n=300):
     This is a query-time VIEW over historical_universe; the underlying
     table itself stays unfiltered and complete.
     """
+    from backend.database.connection import get_connection
+
     sql = """
         WITH latest_snapshot AS (
             SELECT symbol, launch_time_ms, quote_coin
