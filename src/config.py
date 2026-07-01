@@ -1,5 +1,6 @@
 import json
 import os
+from backend.database.connection import get_connection
 
 
 # File Paths
@@ -64,47 +65,32 @@ def get_perp_path(symbol):
 def get_spot_path(symbol):
     return os.path.join(DATA_DIR, symbol, f'{symbol}_spot_hourly.csv')
 
-def get_coin_list():
-    """This function would focus on returning a list consisting of large_cap
-    and mid_cap coins for now at this MVP level due to database restrictions"""
-    with open(MARKET_CAP_CLASSIFICATION, 'r') as f:
-        data = json.load(f)
-
-    coin_list = []
-    for tier in ('large_cap', 'mid_cap', 'small_cap'):
-        for coin in data[tier]:
-            coin_list.append(coin['symbol'])
-
-    return coin_list
-
-
-TIER_LABELS = {
-    'large_cap': 'LARGE',
-    'mid_cap':   'MID',
-    'small_cap': 'SMALL',
-}
-
-def get_coin_metadata():
+def get_product_universe(top_n=300):
     """
-    Returns a dict consisting of metadata for large_cap 
-    and mid_cap coins.
+    Returns the symbols PerpScope actively monitors and polls hourly —
+    the most recent snapshot, filtered to top N by market cap rank.
+    This is a query-time VIEW over historical_universe; the underlying
+    table itself stays unfiltered and complete.
     """
-    with open(MARKET_CAP_CLASSIFICATION, 'r') as f:
-        data = json.load(f)
+    sql = """
+        WITH latest_snapshot AS (
+            SELECT symbol, launch_time_ms, quote_coin
+            FROM historical_universe
+            WHERE snapshot_date = (
+                SELECT MAX(snapshot_date) FROM historical_universe
+            )
+            AND status = 'Trading'
+        )
+        SELECT ls.symbol
+        FROM latest_snapshot ls
+        LEFT JOIN coin_universe cu ON cu.symbol = ls.symbol
+        ORDER BY COALESCE(cu.market_cap_rank, 9999) ASC
+        LIMIT %s
+    """
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (top_n,))
+            rows = cur.fetchall()
+    return [row['symbol'] for row in rows]
 
-    coin_metadata = {}
-    for tier_key in ('large_cap', 'mid_cap', 'small_cap'):
-        tier_label = TIER_LABELS[tier_key]
-        for coin in data[tier_key]:
-            coin_metadata[coin['symbol']] = {
-                'name': coin['name'],
-                'tier': tier_label,
-                'rank': coin['rank'],
-                'market_cap': coin['market_cap'],
-                'coingecko_id': coin['coingecko_id'],
-            }
-    return coin_metadata
-
-
-ALL_COINS = get_coin_list()
-MARKET_CAP_LOOKUP = get_coin_metadata()
+ALL_COINS = get_product_universe(top_n=300)
