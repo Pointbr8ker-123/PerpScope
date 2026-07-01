@@ -183,6 +183,7 @@ perpscope/
 │   ├── config.py                # Coin universe, constants, paths
 │   ├── collect_historical.py    # One-time historical data collection
 │   ├── update_data.py           # Incremental hourly/8hr updates
+│   ├── update_universe.py       # Updates historical_universe table weekly
 │   ├── calculate_rho.py         # He et al. ρ deviation formula
 │   ├── calculate_funding.py     # Funding rate display calculations
 │   ├── get_universe.py          # Bybit perpetual contract discovery
