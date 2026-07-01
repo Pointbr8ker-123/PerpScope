@@ -24,8 +24,7 @@
 
 import pandas as pd
 import numpy as np
-
-from src.config import MARKET_CAP_LOOKUP
+from backend.database.db_config import get_coin_metadata
 from backend.database.connection import get_connection
 
 
@@ -211,7 +210,7 @@ def calculate_current_opportunities(threshold_tier='high'):
     This is the main function that the app's dashboard leaderboard calls.
 
     It fetches current prices for all the coins, computes rho, attaches 
-    market cap metadata from MARKET_CAP_LOOKUP, and returns a sorted Dataframe
+    market cap metadata from get_coin_metadata(), and returns a sorted Dataframe
     with opportunities ranked (i.e largest |rho| at the top).
     """
     prices_df = get_latest_prices()
@@ -233,15 +232,15 @@ def calculate_current_opportunities(threshold_tier='high'):
 
     # Attach market cap metadata
     prices_df['tier'] = prices_df['symbol'].map(
-        lambda s: MARKET_CAP_LOOKUP.get(s, {}).get('tier', 'Unknown')
+        lambda s: get_coin_metadata().get(s, {}).get('tier', 'Unknown')
     )
 
     prices_df['rank'] = prices_df['symbol'].map(
-        lambda s: MARKET_CAP_LOOKUP.get(s, {}).get('rank', 9999)
+        lambda s: get_coin_metadata().get(s, {}).get('rank', 9999)
     )
 
     prices_df['name'] = prices_df['symbol'].map(
-        lambda s: MARKET_CAP_LOOKUP.get(s, {}).get('name', s)
+        lambda s: get_coin_metadata().get(s, {}).get('name', s)
     )
 
     # Sort by opportunities, then by |rho|
@@ -295,13 +294,13 @@ def get_market_cap_comparison_data(days=90):
  
     # Attach metadata
     df['tier'] = df['symbol'].map(
-        lambda s: MARKET_CAP_LOOKUP.get(s, {}).get('tier', 'Unknown')
+        lambda s: get_coin_metadata().get(s, {}).get('tier', 'Unknown')
     )
     df['rank'] = df['symbol'].map(
-        lambda s: MARKET_CAP_LOOKUP.get(s, {}).get('rank', 9999)
+        lambda s: get_coin_metadata().get(s, {}).get('rank', 9999)
     )
     df['name'] = df['symbol'].map(
-        lambda s: MARKET_CAP_LOOKUP.get(s, {}).get('name', s)
+        lambda s: get_coin_metadata().get(s, {}).get('name', s)
     )
  
     # Aggregate by coin 
