@@ -12,7 +12,8 @@
 #   GET /api/funding/{symbol} -> funding rate history for charts
 #   GET /api/research/summary -> cross-sectional tier analysis
 
-
+import os
+import json
 import math
 import numpy as np
 from fastapi import FastAPI, APIRouter, HTTPException, Query
@@ -24,7 +25,7 @@ from src.calculate_rho import (
     THRESHOLDS,
     KAPPA, IOTA, GAMMA, RISK_FREE_RATE_8HR, PERIODS_PER_YEAR
 )
-from src.config import ALL_COINS, MARKET_CAP_LOOKUP
+from src.config import BASE_DIR
 from src.utils import log_err, log_warn, log_info
 
 
@@ -40,15 +41,54 @@ TIER_MAP_DB_TO_UI = {
     'Unknown': 'SMALL'
 }
 
+ALL_SYMBOLS = []
+MARKET_CAP_LOOKUP = {}
+
+
+def _fallback_load_from_json():
+    """
+    Emergency fallback — reads from the deprecated
+    market_cap_classification.json if database is unreachable.
+    This file is stale and not kept in sync automatically.
+    Prefer fixing the database connection over relying on this.
+    """
+    json_path = os.path.join(BASE_DIR, 'market_cap_classification.json')
+    if not os.path.exists(json_path):
+        log_warn("JSON fallback file not found — MARKET_CAP_LOOKUP stays empty")
+        return
+
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+
+    for tier_key, ui_tier in TIER_MAP_DB_TO_UI.items():
+        for coin in data.get(tier_key, []):
+            MARKET_CAP_LOOKUP[coin['symbol']] = {
+                'tier': ui_tier,
+                'rank': coin.get('rank', 9999),
+                'name': coin.get('name', coin['symbol'])
+            }
+
+    log_warn(
+        f"Loaded {len(MARKET_CAP_LOOKUP)} coins from deprecated JSON fallback. "
+        f"Run get_market_caps.py to refresh coin_universe table."
+    )
+
+
 def load_market_cap_data():
     """
-    Loads market cap classification from the coin_universe table.
-    Maps database tier names ('large_cap', 'mid_cap', 'small_cap') to
-    UI-friendly names ('LARGE', 'MID', 'SMALL') and populates the
-    global MARKET_CAP_LOOKUP and ALL_COINS used by all endpoints.
+    Loads coin metadata from coin_universe table into MARKET_CAP_LOOKUP 
+    and ALL_SYMBOLS.
 
-    Falls back to config.py data if the database query fails.
+    Called once at FastAPI startup via the @app.on_event('startup')
+    handler in main.py. All endpoints read from MARKET_CAP_LOOKUP
+    via get_coin_metadata() rather than hitting the database per-request.
     """
+    global MARKET_CAP_LOOKUP, ALL_SYMBOLS
+
+    # Clear in case this is called on a hot-reload
+    MARKET_CAP_LOOKUP.clear()
+    ALL_SYMBOLS.clear()
+
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -60,9 +100,10 @@ def load_market_cap_data():
                 """)
                 rows = cur.fetchall()
 
-
-        MARKET_CAP_LOOKUP.clear()
-        ALL_COINS.clear()
+        if not rows:
+            log_warn("coin_universe table is empty — run get_market_caps.py")
+            _fallback_load_from_json()
+            return
 
         for row in rows:
             db_tier = row['market_cap_tier'] or 'Unknown'
@@ -71,16 +112,15 @@ def load_market_cap_data():
             MARKET_CAP_LOOKUP[row['symbol']] = {
                 'tier': ui_tier,
                 'rank': row['market_cap_rank'] or 9999,
-                'name': row['name'] or row['symbol']
+                'name': row['name'] or row['symbol'].replace('USDT', '')
             }
-            ALL_COINS.append(row['symbol'])
+            ALL_SYMBOLS.append(row['symbol'])
 
         log_info(f"Loaded {len(MARKET_CAP_LOOKUP)} coins from database")
-        return
-    
+
     except Exception as e:
-        log_warn(f"Database load failed: {e}. Trying JSON fallback..."
-                       f"Using config.py data: {len(MARKET_CAP_LOOKUP)} coins loaded.")
+        log_err(f"Database load failed: {e} — attempting JSON fallback")
+        _fallback_load_from_json()
 
 
 async def lifespan(app: FastAPI):
@@ -132,7 +172,7 @@ async def get_all_coins():
     """
     coins = []
     
-    for symbol in ALL_COINS:
+    for symbol in ALL_SYMBOLS:
         metadata = get_coin_metadata(symbol)
         coins.append({
             'symbol': symbol,
