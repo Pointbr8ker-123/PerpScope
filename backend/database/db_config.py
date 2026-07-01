@@ -3,7 +3,6 @@ import json
 import logging
 from dotenv import load_dotenv
 from src.config import BASE_DIR
-from backend.database.connection import get_connection
 
 load_dotenv()
 
@@ -68,6 +67,8 @@ def load_market_cap_data():
     get_coin_meta() and get_all_symbols() — never import the
     private _MARKET_CAP_LOOKUP or _ALL_SYMBOLS directly.
     """
+    from backend.database.connection import get_connection
+
     _MARKET_CAP_LOOKUP.clear()
     _ALL_SYMBOLS.clear()
 
