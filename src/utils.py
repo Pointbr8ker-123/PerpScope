@@ -1,3 +1,4 @@
+import math
 import logging
 from datetime import datetime, timezone
 
@@ -34,3 +35,19 @@ def log_warn(msg):
 
 def log_err(msg):
     logger.error(msg)
+
+
+def sanitize_floats(val):
+    """
+    This function recursively replaces NaN and inf values with None in a list
+    or dict or if its a single float value before FastAPI receives it.
+    """
+    if isinstance(val, dict):
+        return {k: sanitize_floats(v) for k, v in val.items()}
+    elif isinstance(val, list):
+        return [sanitize_floats(v) for v in val]
+    elif isinstance(val, float):
+        if math.isnan(val) or math.isinf(val):
+            return None
+        return val
+    return val
