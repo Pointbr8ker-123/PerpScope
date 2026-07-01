@@ -8,13 +8,11 @@ market cap segments
 """
 
 import requests
-import json
-import os
 import time
 from datetime import datetime, timezone
 
 from src.config import COINGECKO_BASE_URL
-from src.utils import log_info, log_warn, log_err
+from src.utils import log_info, log_err
 from backend.database.connection import get_connection
 
 
