@@ -76,15 +76,35 @@ def sync_coin_universe_table():
     """
 
     # Mark delisted symbols inactive
+    # Conservative deactivation - absent from last 3 snapshots 
+    # before deactivation
     deactivate_sql = """
+        WITH recent_snapshots AS (
+            SELECT DISTINCT snapshot_date
+            FROM historical_universe
+            ORDER BY snapshot_date DESC
+            LIMIT 3
+        ),
+        snapshot_count AS (
+            SELECT COUNT(*) AS n FROM recent_snapshots
+        ),
+        absent_coins AS (
+            SELECT cu.symbol
+            FROM coin_universe cu
+            CROSS JOIN snapshot_count sc
+            WHERE cu.is_active = true
+                AND sc.n >= 3
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM historical_universe hu
+                    WHERE hu.symbol = cu.symbol
+                        AND hu.status = 'Trading'
+                        AND hu.snapshot_date IN (SELECT snapshot_date FROM recent_snapshots)
+                )
+        )
         UPDATE coin_universe
         SET is_active = false
-        WHERE symbol NOT IN (
-            SELECT symbol FROM historical_universe
-            WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM historical_universe)
-            AND status = 'Trading'
-        )
-        AND is_active = true
+        WHERE symbol IN (SELECT symbol FROM absent_coins)
     """
 
     with get_connection() as conn:
@@ -96,7 +116,8 @@ def sync_coin_universe_table():
         conn.commit()
 
     log_info(f"coin_universe sync: {new_count} new symbols added, "
-             f"{deactivated_count} symbols marked inactive")
+             f"{deactivated_count} symbols marked inactive "
+             f"absent from last 3 consecutive weekly snapshots")
 
 
 if __name__== "__main__":
