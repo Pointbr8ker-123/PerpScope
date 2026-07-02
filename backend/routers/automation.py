@@ -12,7 +12,7 @@ import os
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
 from backend.database.connection import get_connection
-from src.config import MARKET_CAP_LOOKUP
+from src.config import ALL_COINS
 from src.update_data import run_price_update, run_funding_rates_update
 from src.utils import log_info
 
@@ -98,6 +98,6 @@ async def health_check():
     return {
         "status":       "ok",
         "database":     db_status,
-        "coins_loaded": len(MARKET_CAP_LOOKUP),
+        "coins_loaded": len(ALL_COINS),
         "timestamp":    datetime.now(timezone.utc).isoformat()
     }
