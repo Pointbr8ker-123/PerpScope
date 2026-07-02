@@ -18,10 +18,17 @@ logger  = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 TIER_MAP_DB_TO_UI = {
+    # Short form — current standard, what coin_universe now stores
+    'LARGE':     'LARGE',
+    'MID':       'MID',
+    'SMALL':     'SMALL',
+    # Long form — legacy from JSON classification, kept as safety net
     'large_cap': 'LARGE',
     'mid_cap':   'MID',
     'small_cap': 'SMALL',
-    'Unknown':   'SMALL'
+    # Fallbacks
+    'Unknown':   'SMALL',
+    None:        'SMALL',
 }
 
 # Private — mutated in place by load_market_cap_data(), never reassigned
