@@ -526,16 +526,22 @@ async def get_market_stats():
     """
     sql = """
         WITH latest_perp AS (
-            SELECT DISTINCT ON (symbol)
-                symbol, close AS perp_price
-            FROM perp_prices
-            ORDER BY symbol, timestamp_ms DESC
+            SELECT DISTINCT ON (p.symbol)
+                p.symbol, p.close AS perp_price
+            FROM perp_prices p
+            JOIN coin_universe cu ON cu.symbol = p.symbol
+            WHERE p.close > 0
+                AND cu.is_active = true
+            ORDER BY p.symbol, p.timestamp_ms DESC
         ),
         latest_spot AS (
-            SELECT DISTINCT ON (symbol)
-                symbol, close AS spot_price
-            FROM spot_prices
-            ORDER BY symbol, timestamp_ms DESC
+            SELECT DISTINCT ON (s.symbol)
+                s.symbol, s.close AS spot_price
+            FROM spot_prices s
+            JOIN coin_universe cu ON cu.symbol = s.symbol
+            WHERE s.close > 0
+                AND cu.is_active = true
+            ORDER BY s.symbol, s.timestamp_ms DESC
         )
         SELECT p.symbol, p.perp_price, s.spot_price
         FROM latest_perp  p
