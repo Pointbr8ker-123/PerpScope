@@ -9,14 +9,18 @@
 # This module provides a shared pool that workers borrow from and return to,
 # ensuring we never exceed 5 concurrent connections.
 
+import os
 import psycopg2
 import threading
 from psycopg2.pool import ThreadedConnectionPool
 from contextlib import contextmanager
 from psycopg2.extras import RealDictCursor
-from backend.database.db_config import SUPABASE_DATABASE_URL
 from src.utils import log_info, log_warn
+from dotenv import load_dotenv
 
+load_dotenv()
+
+SUPABASE_DATABASE_URL = os.getenv('DATABASE_URL')
 
 _pool      = None
 _pool_lock = threading.Lock()
