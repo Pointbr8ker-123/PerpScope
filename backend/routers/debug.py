@@ -9,7 +9,7 @@
 
 from fastapi import APIRouter
 from backend.database.connection import get_connection
-from src.config import ALL_COINS, MARKET_CAP_LOOKUP
+from src.config import ALL_COINS
 
 
 router = APIRouter(prefix="/debug", tags=["debug"])
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/debug", tags=["debug"])
 @router.get("/debug/lookup")
 async def debug_lookup():
     return {
-        "lookup_size": len(MARKET_CAP_LOOKUP),
-        "sample": dict(list(MARKET_CAP_LOOKUP.items())[:3]),
+        "lookup_size": len(ALL_COINS),
+        "sample": dict(list(ALL_COINS.items())[:3]),
         "all_symbols_count": len(ALL_COINS)
     }
 
