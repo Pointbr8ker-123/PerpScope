@@ -31,12 +31,12 @@ def classify_tier(rank):
     return 'SMALL'
 
 
-def fetch_coingecko_rankings(pages=4, per_page=250):
+def fetch_coingecko_rankings(pages=8, per_page=250):
     """
     This function pulls market cap rankings from CoinGecko accross 
     multiple pages.
 
-    250 per page is CoinGecko's max and 4 per page covers top 1000 coins,
+    250 per page is CoinGecko's max and 8 pages covers top 2000 coins,
     which is enough to get the ranking info we need for out 300 coins
     """
     all_coins = {}
