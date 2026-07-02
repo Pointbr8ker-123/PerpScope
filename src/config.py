@@ -65,26 +65,16 @@ def get_spot_path(symbol):
 
 def get_product_universe(top_n=300):
     """
-    Returns the symbols PerpScope actively monitors and polls hourly —
-    the most recent snapshot, filtered to top N by market cap rank.
-    This is a query-time VIEW over historical_universe; the underlying
-    table itself stays unfiltered and complete.
+    Returns the symbols PerpScope actively monitors — the top N symbols
+    by market cap rank from the coin_universe table.
     """
     from backend.database.connection import get_connection
 
     sql = """
-        WITH latest_snapshot AS (
-            SELECT symbol, launch_time_ms, quote_coin
-            FROM historical_universe
-            WHERE snapshot_date = (
-                SELECT MAX(snapshot_date) FROM historical_universe
-            )
-            AND status = 'Trading'
-        )
-        SELECT ls.symbol
-        FROM latest_snapshot ls
-        LEFT JOIN coin_universe cu ON cu.symbol = ls.symbol
-        ORDER BY COALESCE(cu.market_cap_rank, 9999) ASC
+        SELECT symbol
+        FROM coin_universe
+        WHERE rank IS NOT NULL
+        ORDER BY rank ASC
         LIMIT %s
     """
     with get_connection() as conn:
