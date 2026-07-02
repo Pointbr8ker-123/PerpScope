@@ -24,7 +24,11 @@ def update_universe():
     sql = """
         INSERT INTO historical_universe
             (snapshot_date, symbol, status, launch_time_ms, quote_coin)
-        VALUES (%s, %s, %s, %s, %s)
+        SELECT %s, %s, %s, %s, %s
+        WHERE EXISTS (
+            SELECT 1 FROM coin_universe
+            WHERE symbol = %s AND is_active = true
+        )
         ON CONFLICT (snapshot_date, symbol) DO NOTHING
     """
 
