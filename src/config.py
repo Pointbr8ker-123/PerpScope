@@ -74,7 +74,7 @@ def get_product_universe(top_n=300):
         SELECT symbol
         FROM coin_universe
         WHERE market_cap_rank IS NOT NULL
-        ORDER BY rank ASC
+        ORDER BY market_cap_rank ASC
         LIMIT %s
     """
     with get_connection() as conn:
