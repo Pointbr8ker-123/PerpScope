@@ -408,7 +408,7 @@ async def get_funding_history(symbol, days=Query(default=9)):
             "signal":          get_funding_signal(annualized)
         })
 
-    rates_ann = [d['rate_annualized'] for d in data]
+    rates_ann = [d['annualized'] for d in data]
 
     return sanitize_floats({
         "symbol":      symbol,
