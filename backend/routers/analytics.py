@@ -366,13 +366,11 @@ async def get_coin_history(symbol, days=Query(default=90)):
 
 
 @router.get("/funding/{symbol}")
-async def get_funding_history(
-    symbol,
-    days=Query(90, ge=1, le=365)
-):
+async def get_funding_history(symbol, days=Query(default=9)):
     """
     This function returns the raw funding rate history for one coin.
     """
+    days = max(1, min(int(days), 365))
     symbol = symbol.upper()
 
     sql = """
