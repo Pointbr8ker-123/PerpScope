@@ -392,21 +392,46 @@ async def get_funding_history(symbol, days=Query(default=9)):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     
     if not rows:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No funding rate history for {symbol}"
-        )
+        return {
+            "symbol":      symbol,
+            "days":        days,
+            "data_points": 0,
+            "summary": {
+                "mean_annualized": 0.0,
+                "max_annualized":  0.0,
+                "min_annualized":  0.0,
+            },
+            "data": []
+        }
     
     data = []
     for row in rows:
         rate_8hr    = float(row['funding_rate'])
         annualized  = annualize_funding_rate(rate_8hr)
+
+        # Skip rows that would produce null/NaN values
+        if not (rate_8hr == rate_8hr) or rate_8hr == 0:
+            continue
+        
         data.append({
             "date":       row['timestamp'].strftime('%Y-%m-%d'),
             "funding":    round(rate_8hr, 6),
             "annualized": round(annualized, 2),
             "signal":          get_funding_signal(annualized)
         })
+
+    if not data:
+        return {
+            "symbol":      symbol,
+            "days":        days,
+            "data_points": 0,
+            "summary": {
+                "mean_annualized": 0.0,
+                "max_annualized":  0.0,
+                "min_annualized":  0.0,
+            },
+            "data": []
+        }
 
     rates_ann = [d['annualized'] for d in data]
 
