@@ -156,7 +156,7 @@ def get_alerts_states_for_symbol(symbol):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, (symbol,))
-            rows = cur.fetchall
+            rows = cur.fetchall()
 
     return [dict(r) for r in rows]
 
@@ -177,7 +177,7 @@ def upsert_alert_state(user_id, symbol, state, opened_at=None,
             state           = EXCLUDED.state,
             opened_at       = COALESCE(EXCLUDED.opened_at, alert_state.opened_at),
             entry_rho       = COALESCE(EXCLUDED.entry_rho, alert_state.entry_rho),
-            last_alert_rho  = COALESCE(EXCLUDED.last_alert_rho, alert_state.last_alert_rho)
+            last_alert_rho  = COALESCE(EXCLUDED.last_alert_rho, alert_state.last_alert_rho),
             last_alerted_at = NOW()
     """
 
@@ -355,7 +355,7 @@ def process_coin_alert(coin):
 
                 upsert_alert_state(user_id, symbol, 'NEUTRAL')
 
-        return alerts_sent
+    return alerts_sent
 
 
 def check_and_send_alerts(opportuinities):

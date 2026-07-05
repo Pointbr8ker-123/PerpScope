@@ -232,15 +232,15 @@ def calculate_current_opportunities(threshold_tier='high'):
 
     # Attach market cap metadata
     prices_df['tier'] = prices_df['symbol'].map(
-        lambda s: get_coin_metadata().get(s, {}).get('tier', 'Unknown')
+        lambda s: get_coin_metadata(s).get('tier', 'Unknown')
     )
 
     prices_df['rank'] = prices_df['symbol'].map(
-        lambda s: get_coin_metadata().get(s, {}).get('rank', 9999)
+        lambda s: get_coin_metadata(s).get('rank', 9999)
     )
 
     prices_df['name'] = prices_df['symbol'].map(
-        lambda s: get_coin_metadata().get(s, {}).get('name', s)
+        lambda s: get_coin_metadata(s).get('name', s)
     )
 
     # Sort by opportunities, then by |rho|
