@@ -253,6 +253,11 @@ def calculate_current_opportunities(threshold_tier='high'):
     prices_df = prices_df.drop(columns=['is_opportunity'])
     prices_df = prices_df.reset_index(drop=True)
 
+    prices_df = prices_df.rename(columns={
+        'rho': 'rho_annual',   # frontend and alert engine expect rho_annual
+        'rank': 'mc_rank'      # alert engine expects mc_rank
+    })
+
     return prices_df
 
 
