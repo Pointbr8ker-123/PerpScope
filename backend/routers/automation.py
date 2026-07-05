@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
 from backend.database.connection import get_connection
 from src.config import ALL_COINS
 from src.update_data import run_price_update, run_funding_rates_update
-from src.utils import log_info
+from src.utils import log_info, log_err
 
 
 router = APIRouter(tags=["automation"])
@@ -77,6 +77,45 @@ async def trigger_price_update(
         "status":   "accepted",
         "message":  "Perp and spot prices updates started in background",
         "pipeline": "prices"
+    }
+
+
+@router.post("/trigger/universe")
+async def trigger_universe_update(
+    background_tasks: BackgroundTasks,
+    key = Query(...)
+):
+    """
+    This function is triggered weekly via cron jobs to refresh the coin
+    universe and market cap classification.
+    """
+    verify_cron_secret(key)
+
+    def run_weekly_universe_update():
+        try:
+            from src.update_universe import (
+                update_universe, 
+                sync_coin_universe_table
+            )
+            update_universe()
+            sync_coin_universe_table()
+            log_info("Universe update complete")
+        except Exception as e:
+            log_err(f"Universe update failed: {e}")
+
+        try:
+            from src.get_market_caps import update_market_caps
+            update_market_caps()
+            log_info("Market cap update complete")
+        except Exception as e:
+            log_err(f"Market cap update failed: {e}")
+    
+    background_tasks.add_task(run_weekly_universe_update)
+    log_info("Weekly universe update triggered by cron-job")
+
+    return {
+        "status"  : "accepted",
+        "pipeline": "universe"
     }
 
 

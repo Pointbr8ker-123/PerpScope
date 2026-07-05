@@ -7,8 +7,6 @@ if they have a spot market and classified them into:
     - product_universe: all the coins that have both perp and spot markets
 
 Run this script periodically to keep the coin universe up to date
-
-Chore: Automate this script so that it runs periodically without having to manually do so.
 """
 
 import requests
