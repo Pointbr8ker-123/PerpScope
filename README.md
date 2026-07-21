@@ -43,7 +43,9 @@ PerpScope calculates the value of this "gap" or deviation (ρ) in real time for 
 - **Deep dive analytics** — Historical charts for each coin showing mispricing trends and funding rates over time
 - **Market cap research** — Compare how large, mid, and small cap coins behave differently (small caps show larger deviations)
 - **Telegram alerts** — Receive phone notifications when opportunities open, intensify, or close (no need to watch the dashboard 24/7)
+  
   <img src="docs/screenshots/telegram_alert.jpeg" width="400" alt="Telegram alert showing opportunity opened message">
+  
 - **User accounts** — Save your alert preferences and get personalised notifications based on your thresholds
 
 ---
