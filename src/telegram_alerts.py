@@ -95,7 +95,8 @@ def fmt_opportunity_closed(symbol, rho, open_duration_hours, entry_rho, peak_rho
     return (
         f"✅ *CLOSED — {display_symbol}*\n"
         f"\n"
-        f"ρ has returned to neutral (`{rho:+.1f}%`)\n"
+        f"ρ has dropped below the retail fee threshold\n"
+        f"Current ρ: `{rho:+.1f}%` (below 179.4% breakeven for retail fees)\n"
         f"\n"
         f"*Opened at:* `{entry_rho:+.1f}%`\n"
         f"*Peak:*      `{peak_rho:+.1f}%`\n"
