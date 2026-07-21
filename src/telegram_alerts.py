@@ -163,7 +163,8 @@ def get_alerts_states_for_symbol(symbol):
 
 
 def upsert_alert_state(user_id, symbol, state, opened_at=None,
-                       entry_rho=None, last_alert_rho=None):
+                       entry_rho=None, last_alert_rho=None,
+                       entry_signal=None):
     """
     This function creates or updates the alert state for one user/
     symbol combination.
@@ -173,12 +174,13 @@ def upsert_alert_state(user_id, symbol, state, opened_at=None,
             (user_id, symbol, state, opened_at, entry_rho,
             last_alert_rho, last_alerted_at)
         VALUES
-            (%s, %s, %s, %s, %s, %s, NOW())
+            (%s, %s, %s, %s, %s, %s, NOW(), %s)
         ON CONFLICT (user_id, symbol) DO UPDATE SET
             state           = EXCLUDED.state,
             opened_at       = COALESCE(EXCLUDED.opened_at, alert_state.opened_at),
             entry_rho       = COALESCE(EXCLUDED.entry_rho, alert_state.entry_rho),
             last_alert_rho  = COALESCE(EXCLUDED.last_alert_rho, alert_state.last_alert_rho),
+            entry_signal    = COALESCE(EXCLUDED.entry_signal, alert_state.entry_signal),
             last_alerted_at = NOW()
     """
 
@@ -186,7 +188,7 @@ def upsert_alert_state(user_id, symbol, state, opened_at=None,
         with conn.cursor() as cur:
             cur.execute(sql, (
                 user_id, symbol, state,
-                opened_at, entry_rho, last_alert_rho
+                opened_at, entry_rho, last_alert_rho, entry_signal
             ))
         conn.commit()
 
@@ -291,6 +293,8 @@ def process_coin_alert(coin):
                     entry_rho=rho, last_alert_rho=rho
                 )
             continue
+        
+        entry_signal = watcher.get('entry_signal')
 
         # State: NEUTRAL
         if current_state == 'NEUTRAL':
@@ -307,11 +311,18 @@ def process_coin_alert(coin):
                     upsert_alert_state(
                         user_id, symbol, 'ACTIVE',
                         opened_at=datetime.now(timezone.utc),
-                        entry_rho=rho, last_alert_rho=rho
+                        entry_rho=rho, 
+                        last_alert_rho=rho,
+                        entry_signal=signal
                     )
 
         # State: ACTIVE
         elif current_state == 'ACTIVE':
+            # Direction flipped - this is a close first, before considering if
+            # its an intensification in the opposite direction or not
+            if entry_signal and signal != entry_signal and not is_neutral:
+                upsert_alert_state(user_id, symbol, 'CLOSING')
+
             if not is_above or is_neutral:
                 # Opportunity might be closing - do not send alert yet
                 upsert_alert_state(user_id, symbol, 'CLOSING')
