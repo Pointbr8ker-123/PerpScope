@@ -243,6 +243,11 @@ def calculate_current_opportunities(threshold_tier='high'):
         lambda s: get_coin_metadata(s).get('name', s)
     )
 
+    prices_df['premium'] = (
+        (prices_df['perp_price'] - prices_df['spot_price'])
+        / prices_df['spot_price']
+    )
+
     # Sort by opportunities, then by |rho|
     prices_df['is_opportunity'] = prices_df['signal'] != 'NEUTRAL'
     prices_df = prices_df.sort_values(
