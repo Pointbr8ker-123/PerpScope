@@ -111,14 +111,21 @@ def fmt_opportunity_closed(symbol, rho, open_duration_hours, entry_rho, peak_rho
 def fmt_opportunity_intensified(symbol, rho, previous_rho, entry_rho):
     display_symbol = symbol.replace('USDT', '')
     increase       = ((abs(rho) - abs(previous_rho)) / abs(previous_rho)) * 100
-    from_entry     = ((abs(rho) - abs(entry_rho)) / abs(entry_rho)) * 100
+
+    # Only show entry level if it differs from previous alert (as they are usually
+    # equal on the first intensification)
+    entry_line = (
+        f"Opened at:*       `{entry_rho:+.1f}%`\n"
+        if abs(entry_rho - previous_rho) > 0.01
+        else ""
+    )
 
     return (
         f"🔥 *INTENSIFIED — {display_symbol}*\n\n"
-        f"ρ has jumped significantly\n"
-        f"*Entry level:*    `{entry_rho:+.1f}%`\n"
-        f"*Previous alert:* `{previous_rho:+.1f}%`\n"
-        f"*Current alert:*  `{rho:+.1f}%` (`+{increase:.0f}%` increase from `{from_entry:+.0f}%` from entry)"
+        f"ρ deviation has jumped significantly\n\n"
+        f"{entry_line}"
+        f"*Previous level:* `{previous_rho:+.1f}%`\n"
+        f"*Current level:*  `{rho:+.1f}%` (`+{increase:.0f}%` jump)"
         f"\n\n"
         f"May warrant position review.\n\n"
         f"[View on PerpScope](https://perpscope-frontend.nwosudavid13.workers.dev/coin/{display_symbol})"
