@@ -165,7 +165,7 @@ def get_latest_prices(symbols=None):
     return pd.DataFrame([dict(r) for r in rows])
 
 
-def  get_historical_rho(symbol, days=90):
+def get_historical_rho(symbol, days=90):
     """
     This function calculates historical rho for a single coin over the past
     N days. Would be used by the coin detail chart page.
@@ -304,13 +304,13 @@ def get_market_cap_comparison_data(days=90):
  
     # Attach metadata
     df['tier'] = df['symbol'].map(
-        lambda s: get_coin_metadata().get(s, {}).get('tier', 'Unknown')
+        lambda s: get_coin_metadata(s).get('tier', 'Unknown')
     )
     df['rank'] = df['symbol'].map(
-        lambda s: get_coin_metadata().get(s, {}).get('rank', 9999)
+        lambda s: get_coin_metadata(s).get('rank', 9999)
     )
     df['name'] = df['symbol'].map(
-        lambda s: get_coin_metadata().get(s, {}).get('name', s)
+        lambda s: get_coin_metadata(s).get('name', s)
     )
  
     # Aggregate by coin 
