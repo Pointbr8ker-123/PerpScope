@@ -179,7 +179,7 @@ def upsert_alert_state(user_id, symbol, state, opened_at=None,
     sql = """
         INSERT INTO alert_state
             (user_id, symbol, state, opened_at, entry_rho,
-            last_alert_rho, last_alerted_at)
+            last_alert_rho, last_alerted_at, entry_signal)
         VALUES
             (%s, %s, %s, %s, %s, %s, NOW(), %s)
         ON CONFLICT (user_id, symbol) DO UPDATE SET
