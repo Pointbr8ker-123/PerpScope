@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.utils import log_info
 from backend.routers import analytics, auth, automation, debug, webhooks
 from backend.database.db_config import load_market_cap_data
+from backend.middleware.security_headers import SecurityHeaders
 
 # -------------------------------------- APP SETUP ----------------------------------------------
 async def lifespan(app: FastAPI):
@@ -42,6 +43,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.add_middleware(SecurityHeaders)
 
 app.add_middleware(
     CORSMiddleware, 
