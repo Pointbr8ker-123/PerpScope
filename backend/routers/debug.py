@@ -10,6 +10,7 @@
 from fastapi import APIRouter
 from backend.database.connection import get_connection
 from src.config import ALL_COINS
+from backend.database.db_config import get_market_cap_lookup
 
 
 router = APIRouter(prefix="/debug", tags=["debug"])
@@ -50,4 +51,14 @@ async def debug_prices(symbol):
         "symbol": symbol,
         "latest_perp": [dict(r) for r in p_rows],
         "latest_spot": [dict(r) for r in s_rows]
+    }
+
+
+@router.get("/debug/meta-check")
+async def debug_meta():
+    lookup = get_market_cap_lookup()
+    return {
+        "lookup_size": len(lookup),
+        "sample":      dict(list(lookup.items())[:3]),
+        "btc_entry":   lookup.get('BTSUSDT'),
     }
