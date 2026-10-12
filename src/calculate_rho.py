@@ -26,6 +26,7 @@ import pandas as pd
 import numpy as np
 from backend.database.db_config import get_coin_metadata
 from backend.database.connection import get_connection
+from src.utils import log_err
 
 
 # ----------------Bybit Funding rate parameters-------------------------
@@ -213,57 +214,65 @@ def calculate_current_opportunities(threshold_tier='high'):
     market cap metadata from get_coin_metadata(), and returns a sorted Dataframe
     with opportunities ranked (i.e largest |rho| at the top).
     """
-    prices_df = get_latest_prices()
+    try:
+        prices_df = get_latest_prices()
 
-    if prices_df.empty:
-        return pd.DataFrame()
+        if prices_df.empty:
+            return pd.DataFrame()
+        
+        # Compute rho to derive a signal
+        prices_df['rho'] = prices_df.apply(
+            lambda row: calculate_rho(row['perp_price'], row['spot_price']),
+            axis=1
+        )
+
+        prices_df['abs_rho'] = prices_df['rho'].abs()
+
+        prices_df['signal'] = prices_df['rho'].apply(
+            lambda r: get_signal(r, threshold_tier)
+        )
+
+        # Attach market cap metadata
+        def attach_metadata(symbol):
+            meta = get_coin_metadata(symbol)
+            return pd.Series({
+                'tier': meta.get('tier', 'SMALL'),
+                'rank': meta.get('rank', 9999),
+                'name': meta.get('name', symbol.replace('USDT', ''))
+            })
+
+        meta_df = prices_df['symbol'].apply(attach_metadata)
+        prices_df = pd.concat([prices_df, meta_df], axis=1)
+
+        prices_df['premium'] = (
+            (prices_df['perp_price'] - prices_df['spot_price'])
+            / prices_df['spot_price']
+        )
+
+        # Sort by opportunities, then by |rho|
+        prices_df['is_opportunity'] = prices_df['signal'] != 'NEUTRAL'
+        prices_df = prices_df.sort_values(
+            ['is_opportunity', 'abs_rho'],
+            ascending=[False, False]
+        )
+
+        prices_df = prices_df.drop(columns=['is_opportunity'])
+        prices_df = prices_df.reset_index(drop=True)
+
+        prices_df = prices_df.rename(columns={
+            'rho': 'rho_annual',   # frontend and alert engine expect rho_annual
+            'rank': 'mc_rank'      # alert engine expects mc_rank
+        })
+
+        return prices_df
     
-    # Compute rho to derive a signal
-    prices_df['rho'] = prices_df.apply(
-        lambda row: calculate_rho(row['perp_price'], row['spot_price']),
-        axis=1
-    )
-
-    prices_df['abs_rho'] = prices_df['rho'].abs()
-
-    prices_df['signal'] = prices_df['rho'].apply(
-        lambda r: get_signal(r, threshold_tier)
-    )
-
-    # Attach market cap metadata
-    prices_df['tier'] = prices_df['symbol'].map(
-        lambda s: get_coin_metadata(s).get('tier', 'Unknown')
-    )
-
-    prices_df['rank'] = prices_df['symbol'].map(
-        lambda s: get_coin_metadata(s).get('rank', 9999)
-    )
-
-    prices_df['name'] = prices_df['symbol'].map(
-        lambda s: get_coin_metadata(s).get('name', s)
-    )
-
-    prices_df['premium'] = (
-        (prices_df['perp_price'] - prices_df['spot_price'])
-        / prices_df['spot_price']
-    )
-
-    # Sort by opportunities, then by |rho|
-    prices_df['is_opportunity'] = prices_df['signal'] != 'NEUTRAL'
-    prices_df = prices_df.sort_values(
-        ['is_opportunity', 'abs_rho'],
-        ascending=[False, False]
-    )
-
-    prices_df = prices_df.drop(columns=['is_opportunity'])
-    prices_df = prices_df.reset_index(drop=True)
-
-    prices_df = prices_df.rename(columns={
-        'rho': 'rho_annual',   # frontend and alert engine expect rho_annual
-        'rank': 'mc_rank'      # alert engine expects mc_rank
-    })
-
-    return prices_df
+    except Exception as e:
+        import traceback
+        log_err(
+            f"calculate_current_opportunites failed: {e}\n"
+            f"{traceback.format_exc()}"
+        )
+        return pd.DataFrame()
 
 
 def get_market_cap_comparison_data(days=90):
