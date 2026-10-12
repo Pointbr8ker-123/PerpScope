@@ -142,7 +142,7 @@ async def health_check():
     }
 
 
-@router.get("/trigger/vacuum")
+@router.post("/trigger/vacuum")
 async def run_vacuum(
     key=Query(..., description="Secret key for authorization")
 ):
@@ -150,7 +150,7 @@ async def run_vacuum(
     This function reclaims dead space from index bloat on a weekly basis.
     """
     verify_cron_secret(key)
-    
+
     tables = ['perp_prices', 'spot_prices', 'funding_rates']
     with get_connection() as conn:
         conn.autocommit = True
