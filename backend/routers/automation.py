@@ -140,3 +140,21 @@ async def health_check():
         "coins_loaded": len(ALL_COINS),
         "timestamp":    datetime.now(timezone.utc).isoformat()
     }
+
+
+@router.get("/trigger/vacuum")
+async def run_vacuum(
+    key=Query(..., description="Secret key for authorization")
+):
+    """
+    This function reclaims dead space from index bloat on a weekly basis.
+    """
+    verify_cron_secret(key)
+    
+    tables = ['perp_prices', 'spot_prices', 'funding_rates']
+    with get_connection() as conn:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for table in tables:
+                cur.execute(f"VACUUM (ANALYZE) {table}")
+                log_info(f"VACUUM complete: {table}")
