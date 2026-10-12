@@ -43,12 +43,19 @@ def get_coin_metadata(symbol):
     Safe to call from any module — always reads the current in-memory state.
     Falls back to safe defaults if the symbol is not in the lookup.
     """
-    return _MARKET_CAP_LOOKUP.get(symbol, {
-        'tier': 'SMALL',
-        'rank': 9999,
-        'name': symbol.replace('USDT', '')
-    })
+    if not symbol:
+        return {'tier': 'SMALL', 'rank': 9999, 'name': ''}
+    
+    result  = _MARKET_CAP_LOOKUP.get(symbol)
 
+    if symbol is None:
+        return {
+            'tier': 'SMALL',
+            'rank': 9999,
+            'name': symbol.replace('USDT', '')
+        }
+    
+    return result
 
 def get_all_symbols():
     """
